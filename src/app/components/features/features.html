@@ -1,22 +1,41 @@
-<section id="features" class="features-section">
-  <h2 class="features-title">
+<section id="features" class="features-section" [style.background]="colors[1]">
+  <h2 class="features-title"
+      [style.color]="colors[0]"
+      [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+      [style.font-size.px]="sizes.title">
     Many
-    <span class="features-title-highlight">Great Features</span>
+    <span class="features-title-highlight" [style.color]="colors[2]">Great Features</span>
   </h2>
 
   <div class="features-badges">
-    <div class="badge" *ngFor="let feature of featureList">
+    <div class="badge" 
+         *ngFor="let feature of featureList"
+         [style.background]="colors[3]"
+         [style.color]="colors[0]"
+         [style.border-color]="colors[2]"
+         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+         [style.font-size.px]="sizes.paragraph">
       {{ feature }}
     </div>
   </div>
 
   <div class="features-grid">
-    <div class="feature-card" *ngFor="let feature of features">
+    <div class="feature-card" 
+         *ngFor="let feature of features"
+         [style.background]="colors[3]"
+         [style.color]="colors[0]"
+         [style.border-color]="colors[2]">
       <div class="feature-header">
-        <h3 class="feature-title">{{ feature.title }}</h3>
+        <h3 class="feature-title" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.subtitle">{{ feature.title }}</h3>
       </div>
 
-      <div class="feature-content">
+      <div class="feature-content"
+           [style.color]="colors[0]"
+           [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+           [style.font-size.px]="sizes.paragraph">
         {{ feature.description }}
       </div>
 

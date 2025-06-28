@@ -2,13 +2,17 @@
 <section class="hero-section" [style.background]="colors[1]">
   <div class="hero-content" [style.background]="colors[3]" [style.color]="colors[0]">
     <main class="hero-title">
-      <h1 class="inline">
+      <h1 class="inline" 
+          [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+          [style.font-size.px]="sizes.title">
         <span class="highlight-primary" [style.color]="colors[2]" [style.background]="colors[1]">
           ColorFonts
         </span>
         interactua
       </h1>
-      <h2 class="inline">
+      <h2 class="inline"
+          [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+          [style.font-size.px]="sizes.subtitle">
         <span class="highlight-secondary" [style.color]="colors[1]" [style.background]="colors[2]">
           assets
         </span>
@@ -16,7 +20,11 @@
       </h2>
     </main>
 
-    <p class="hero-description" [style.color]="colors[0]" [style.background]="colors[1]">
+    <p class="hero-description" 
+       [style.color]="colors[0]" 
+       [style.background]="colors[1]"
+       [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+       [style.font-size.px]="sizes.paragraph">
       interactua con tu app de react los colores y fuentes que quieras
     </p>
 
@@ -26,6 +34,7 @@
         [style.background]="colors[2]"
         [style.color]="colors[1]"
         [style.border-color]="colors[0]"
+        [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
         routerLink="/colors">
         Explorar Colores
       </button>
@@ -34,6 +43,7 @@
         [style.background]="colors[3]"
         [style.color]="colors[0]"
         [style.border-color]="colors[1]"
+        [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
         routerLink="/fonts">
         Explorar Fuentes
       </button>
@@ -42,6 +52,7 @@
         [style.background]="colors[1]"
         [style.color]="colors[2]"
         [style.border-color]="colors[2]"
+        [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
         (click)="goToFonts()">
         Go to Fonts
         <svg class="icon" width="20" height="20" viewBox="0 0 15 15" fill="none">

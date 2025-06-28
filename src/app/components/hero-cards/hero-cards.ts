@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Subscription } from 'rxjs';
+import { StyleService, Sizes } from '../../services/style.service';
 
 @Component({
   selector: 'app-hero-cards',
@@ -9,36 +10,43 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   templateUrl: './hero-cards.html',
   styleUrls: ['./hero-cards.css']
 })
-export class HeroCardsComponent implements OnInit {
-  colors = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
+export class HeroCardsComponent implements OnInit, OnDestroy {
+  colors: string[] = [];
+  fonts: string[] = [];
+  sizes: Sizes = { title: 48, subtitle: 32, paragraph: 18 };
 
-  constructor(private http: HttpClient) {}
+  private subscriptions: Subscription[] = [];
+
+  constructor(private styleService: StyleService) {}
 
   ngOnInit() {
-    this.fetchColors();
+    this.subscribeToStyles();
   }
 
-  private fetchColors() {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-      this.http.get('http://localhost:3000/colors/predeterminado', { headers })
-        .subscribe({
-          next: (data: any) => {
-            if (data) {
-              this.colors = [
-                data.color_1,
-                data.color_2,
-                data.color_3,
-                data.color_4,
-                data.color_5,
-              ];
-            }
-          },
-          error: (error) => {
-            console.error('Error al obtener los colores:', error);
-          }
-        });
-    }
+  ngOnDestroy() {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private subscribeToStyles() {
+    // Suscribirse a los colores
+    this.subscriptions.push(
+      this.styleService.getColors().subscribe(colors => {
+        this.colors = colors;
+      })
+    );
+
+    // Suscribirse a las fuentes
+    this.subscriptions.push(
+      this.styleService.getFonts().subscribe(fonts => {
+        this.fonts = fonts;
+      })
+    );
+
+    // Suscribirse a los tamaños
+    this.subscriptions.push(
+      this.styleService.getSizes().subscribe(sizes => {
+        this.sizes = sizes;
+      })
+    );
   }
 }

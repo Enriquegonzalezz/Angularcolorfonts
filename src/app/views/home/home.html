@@ -1,11 +1,16 @@
-
 <app-hero></app-hero>
 
 <!-- Sección de servicios con carrusel -->
-<section class="services-section">
+<section class="services-section" [style.background]="colors[1]">
   <div class="container">
-    <h2 class="section-title">Nuestros Servicios</h2>
-    <p class="section-subtitle">Descubre lo que podemos hacer por ti</p>
+    <h2 class="section-title" 
+        [style.color]="colors[0]"
+        [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+        [style.font-size.px]="sizes.title">Nuestros Servicios</h2>
+    <p class="section-subtitle" 
+       [style.color]="colors[2]"
+       [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+       [style.font-size.px]="sizes.subtitle">Descubre lo que podemos hacer por ti</p>
     <app-card-carousel></app-card-carousel>
   </div>
 </section>

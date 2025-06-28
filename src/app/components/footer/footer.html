@@ -1,34 +1,68 @@
-<footer class="footer">
+<footer class="footer" [style.background]="colors[1]">
   <div class="footer-container">
     <div class="footer-content">
       <div class="footer-section">
-        <h3 class="footer-title">ColorFonts</h3>
-        <p class="footer-description">
+        <h3 class="footer-title" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.subtitle">ColorFonts</h3>
+        <p class="footer-description"
+           [style.color]="colors[0]"
+           [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+           [style.font-size.px]="sizes.paragraph">
           Interactúa con tu app de React los colores y fuentes que quieras
         </p>
       </div>
 
       <div class="footer-section">
-        <h4 class="footer-subtitle">Enlaces</h4>
+        <h4 class="footer-subtitle" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.paragraph">Enlaces</h4>
         <ul class="footer-links">
-          <li><a href="#features">Features</a></li>
-          <li><a href="#testimonials">Testimonials</a></li>
-          <li><a href="#pricing">Pricing</a></li>
-          <li><a href="#faq">FAQ</a></li>
+          <li><a href="#features" 
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">Features</a></li>
+          <li><a href="#testimonials" 
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">Testimonials</a></li>
+          <li><a href="#pricing" 
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">Pricing</a></li>
+          <li><a href="#faq" 
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">FAQ</a></li>
         </ul>
       </div>
 
       <div class="footer-section">
-        <h4 class="footer-subtitle">Contacto</h4>
+        <h4 class="footer-subtitle" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.paragraph">Contacto</h4>
         <ul class="footer-links">
-          <li><a href="mailto:contact&#64;colorfonts.com">contact&#64;colorfonts.com</a></li>
-          <li><a href="https://github.com/leoMirandaa/shadcn-landing-page.git" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <li><a href="mailto:contact&#64;colorfonts.com" 
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">contact&#64;colorfonts.com</a></li>
+          <li><a href="https://github.com/leoMirandaa/shadcn-landing-page.git" 
+                 target="_blank" 
+                 rel="noopener noreferrer"
+                 [style.color]="colors[0]"
+                 [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                 [style.font-size.px]="sizes.paragraph">GitHub</a></li>
         </ul>
       </div>
     </div>
 
     <div class="footer-bottom">
-      <p>&copy; {{ currentYear }} ColorFonts. Todos los derechos reservados.</p>
+      <p [style.color]="colors[0]"
+         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+         [style.font-size.px]="sizes.paragraph">&copy; {{ currentYear }} ColorFonts. Todos los derechos reservados.</p>
     </div>
   </div>
 </footer>

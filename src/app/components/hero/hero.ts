@@ -1,17 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Subscription } from 'rxjs';
 import { NavbarComponent } from '../navbar/navbar';
 import { HeroCardsComponent } from '../hero-cards/hero-cards';
-
-interface ColorData {
-  color_1: string;
-  color_2: string;
-  color_3: string;
-  color_4: string;
-  color_5: string;
-}
+import { StyleService, Sizes } from '../../services/style.service';
 
 @Component({
   selector: 'app-hero',
@@ -20,19 +14,60 @@ interface ColorData {
   templateUrl: './hero.html',
   styleUrls: ['./hero.css']
 })
-export class HeroComponent implements OnInit {
+export class HeroComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isAdmin = false;
-  colors: string[] = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
+  colors: string[] = [];
+  fonts: string[] = [];
+  sizes: Sizes = { title: 48, subtitle: 32, paragraph: 18 };
+
+  private subscriptions: Subscription[] = [];
 
   constructor(
     private http: HttpClient,
-    private router: Router
-  ) {}
+    private router: Router,
+    private styleService: StyleService
+  ) {
+    console.log('HeroComponent constructor');
+  }
 
   ngOnInit() {
+    console.log('HeroComponent ngOnInit');
     this.checkAuthStatus();
-    this.fetchDefaultColors();
+    this.subscribeToStyles();
+  }
+
+  ngOnDestroy() {
+    console.log('HeroComponent ngOnDestroy');
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  private subscribeToStyles() {
+    console.log('HeroComponent: Suscribiéndose a estilos...');
+    
+    // Suscribirse a los colores
+    this.subscriptions.push(
+      this.styleService.getColors().subscribe(colors => {
+        console.log('HeroComponent: Colores recibidos:', colors);
+        this.colors = colors;
+      })
+    );
+
+    // Suscribirse a las fuentes
+    this.subscriptions.push(
+      this.styleService.getFonts().subscribe(fonts => {
+        console.log('HeroComponent: Fuentes recibidas:', fonts);
+        this.fonts = fonts;
+      })
+    );
+
+    // Suscribirse a los tamaños
+    this.subscriptions.push(
+      this.styleService.getSizes().subscribe(sizes => {
+        console.log('HeroComponent: Tamaños recibidos:', sizes);
+        this.sizes = sizes;
+      })
+    );
   }
 
   checkAuthStatus() {
@@ -54,31 +89,6 @@ export class HeroComponent implements OnInit {
         error: () => {
           this.isLoggedIn = false;
           this.isAdmin = false;
-        }
-      });
-  }
-
-  fetchDefaultColors() {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-    this.http.get<ColorData>('http://localhost:3000/colors/predeterminado', { headers })
-      .subscribe({
-        next: (data) => {
-          if (data) {
-            this.colors = [
-              data.color_1,
-              data.color_2,
-              data.color_3,
-              data.color_4,
-              data.color_5,
-            ];
-          }
-        },
-        error: (error) => {
-          console.error('Error al obtener los colores:', error);
         }
       });
   }
