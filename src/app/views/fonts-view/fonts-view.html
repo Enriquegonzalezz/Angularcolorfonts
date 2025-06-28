@@ -1,0 +1,183 @@
+<app-navbar></app-navbar>
+
+<div class="fonts-view-container">
+  <div class="fonts-view-header">
+    <h1>Font Management</h1>
+    <p>Upload custom fonts and adjust text sizes</p>
+  </div>
+
+  <div class="fonts-view-content">
+    <!-- Font Controls -->
+    <div class="font-controls">
+      <h2>Font Settings</h2>
+
+      <!-- Font File Uploads -->
+      <div class="font-uploads">
+        <div class="font-upload-group" *ngFor="let file of fontFiles; let i = index">
+          <label [for]="'font-' + i">Font {{ i + 1 }}</label>
+          <input
+            type="file"
+            [id]="'font-' + i"
+            accept=".ttf,.otf,.woff,.woff2"
+            (change)="handleFileChange(i, $event)"
+            class="font-file-input"
+          >
+          <div class="font-preview" *ngIf="fontUrls[i]">
+            <span>Font {{ i + 1 }} loaded</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Font Size Controls -->
+      <div class="font-sizes">
+        <h3>Font Sizes</h3>
+        <div class="size-controls">
+          <div class="size-control-group">
+            <label for="paragraph-size">Paragraph Size</label>
+            <input
+              type="range"
+              id="paragraph-size"
+              min="12"
+              max="32"
+              [value]="sizes.paragraph"
+              (input)="handleSizeChange('paragraph', $any($event.target).value)"
+              class="size-slider"
+            >
+            <span class="size-value">{{ sizes.paragraph }}px</span>
+          </div>
+
+          <div class="size-control-group">
+            <label for="subtitle-size">Subtitle Size</label>
+            <input
+              type="range"
+              id="subtitle-size"
+              min="16"
+              max="48"
+              [value]="sizes.subtitle"
+              (input)="handleSizeChange('subtitle', $any($event.target).value)"
+              class="size-slider"
+            >
+            <span class="size-value">{{ sizes.subtitle }}px</span>
+          </div>
+
+          <div class="size-control-group">
+            <label for="title-size">Title Size</label>
+            <input
+              type="range"
+              id="title-size"
+              min="24"
+              max="72"
+              [value]="sizes.title"
+              (input)="handleSizeChange('title', $any($event.target).value)"
+              class="size-slider"
+            >
+            <span class="size-value">{{ sizes.title }}px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="font-actions">
+        <button
+          *ngIf="editRow === null"
+          (click)="handleSave()"
+          class="btn btn-primary"
+        >
+          Save Fonts
+        </button>
+        <button
+          *ngIf="editRow !== null"
+          (click)="handleUpdate()"
+          class="btn btn-primary"
+        >
+          Update Fonts
+        </button>
+        <button
+          *ngIf="editRow !== null"
+          (click)="editRow = null; resetForm()"
+          class="btn btn-secondary"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="font-preview-section">
+      <h2>Preview</h2>
+      <div class="preview-content"
+           [style.font-family]="fontFamily1"
+           [style.font-size]="sizes.paragraph + 'px'">
+
+        <h1 class="preview-title"
+            [style.font-family]="fontFamily2"
+            [style.font-size]="sizes.title + 'px'">
+          Sample Title
+        </h1>
+
+        <h2 class="preview-subtitle"
+            [style.font-family]="fontFamily2"
+            [style.font-size]="sizes.subtitle + 'px'">
+          Sample Subtitle
+        </h2>
+
+        <p class="preview-paragraph">
+          This is a sample paragraph that demonstrates how your custom fonts will look.
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
+          incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis
+          nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+
+        <p class="preview-paragraph">
+          Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore
+          eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt
+          in culpa qui officia deserunt mollit anim id est laborum.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Saved Fonts Table -->
+  <div class="saved-fonts">
+    <h2>Saved Font Configurations</h2>
+    <div class="fonts-table">
+      <div class="table-header">
+        <span>Font Files</span>
+        <span>Sizes</span>
+        <span>Actions</span>
+      </div>
+      <div class="table-row" *ngFor="let row of savedFonts; let i = index">
+        <div class="font-files">
+          <div class="font-file" *ngIf="row.fuente_1">
+            <span class="file-name">{{ row.fuente_1 }}</span>
+          </div>
+          <div class="font-file" *ngIf="row.fuente_2">
+            <span class="file-name">{{ row.fuente_2 }}</span>
+          </div>
+        </div>
+        <div class="font-sizes-display">
+          <span>P: {{ row.tamano_1 }}px</span>
+          <span>S: {{ row.tamano_2 }}px</span>
+          <span>T: {{ row.tamano_3 }}px</span>
+        </div>
+        <div class="row-actions">
+          <button
+            class="btn-icon"
+            (click)="handleSetDefault(row.id)"
+            [class.active]="defaultFontId === row.id"
+            title="Set as default"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l4.5 4.5 5.5 5.5 5.5-5.5 4.5-4.5z"/>
+            </svg>
+          </button>
+          <button (click)="handleEdit(i)" class="btn btn-edit">
+            Edit
+          </button>
+          <button (click)="handleDelete(row.id)" class="btn btn-delete">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

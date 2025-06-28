@@ -1,0 +1,189 @@
+<app-navbar></app-navbar>
+
+<div class="color-view-container">
+  <div class="color-view-header">
+    <h1>Color Management</h1>
+    <p>Customize your color palette and preview how it looks</p>
+  </div>
+
+  <div class="color-view-content">
+    <!-- Color Controls -->
+    <div class="color-controls">
+      <h2>Color Palette</h2>
+      <div class="color-inputs">
+        <div class="color-input-group" *ngFor="let color of colors; let i = index">
+          <label [for]="'color-' + i" class="input-label">Color {{ i + 1 }}</label>
+          <div class="color-input-wrapper">
+            <input
+              type="color"
+              [id]="'color-' + i"
+              [value]="color"
+              (input)="handleColorChange(i, $any($event.target).value)"
+              class="color-picker"
+              [title]="'Color ' + (i + 1)"
+              [attr.aria-label]="'Color ' + (i + 1) + ' picker'"
+            >
+            <input
+              type="text"
+              [id]="'color-text-' + i"
+              [value]="color"
+              (input)="handleColorChange(i, $any($event.target).value)"
+              class="color-text"
+              [placeholder]="'Color ' + (i + 1)"
+              [title]="'Color ' + (i + 1)"
+              [attr.aria-label]="'Color ' + (i + 1) + ' hex value'"
+            >
+          </div>
+        </div>
+      </div>
+
+      <div class="color-actions">
+        <div class="action-group">
+
+          <button
+            (click)="handleSave()"
+            class="btn btn-primaryo"
+            [disabled]="!isValidColorPalette()"
+            title="Guardar paleta de colores"
+            *ngIf="editRow === null"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+              <polyline points="17 21 17 13 7 13 7 21"></polyline>
+              <polyline points="7 3 7 8 15 8"></polyline>
+            </svg>
+            Guardar
+          </button>
+          <button
+            *ngIf="editRow !== null"
+            (click)="handleUpdate()"
+            class="btn btn-primary"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Actualizar
+          </button>
+          <button
+            *ngIf="editRow !== null"
+            (click)="resetForm()"
+            class="btn btn-secondary"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="color-preview">
+      <h2>Preview</h2>
+      <div class="preview-card"
+           [style.background]="'linear-gradient(135deg, ' + colors[0] + ', ' + colors[1] + ')'"
+           [style.color]="colors[2]"
+           [style.borderColor]="colors[3]"
+           [style.boxShadow]="'0 0 20px 2px ' + colors[4] + '55'">
+
+        <div class="preview-header">
+          <div class="preview-avatar" [style.background]="colors[1]" [style.color]="colors[2]">
+            EG
+          </div>
+          <div class="preview-user-info">
+            <h3 [style.color]="colors[2]">Enrique Gonzalez</h3>
+            <p [style.color]="colors[2]">&#64;kikegonza</p>
+          </div>
+        </div>
+
+        <div class="preview-content" [style.color]="colors[2]">
+          Funciona perfecto!
+        </div>
+
+        <div class="preview-pricing">
+          <div class="preview-badge"
+               [style.background]="colors[3]"
+               [style.color]="colors[1]"
+               [style.borderColor]="colors[4]">
+            el mas popular
+          </div>
+          <div class="preview-price">
+            <span [style.color]="colors[2]">$0</span>
+            <span [style.color]="colors[2]"> /month</span>
+          </div>
+          <p [style.color]="colors[2]">
+            Lorem ipsum dolor sit, amet ipsum consectetur adipisicing elit.
+          </p>
+          <button class="preview-btn"
+                  [style.background]="colors[3]"
+                  [style.color]="colors[1]"
+                  [style.borderColor]="colors[4]">
+            Empezar prueba ahora
+          </button>
+        </div>
+
+        <hr class="preview-divider" [style.borderColor]="colors[4]">
+
+        <div class="preview-benefits">
+          <div class="benefit-item" *ngFor="let benefit of ['4 Team member', '4 GB Storage', 'Upto 6 pages']">
+            <span class="benefit-dot" [style.background]="colors[4]"></span>
+            <span [style.color]="colors[2]">{{ benefit }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Color List -->
+    <div class="color-list">
+      <h2>Saved Color Palettes</h2>
+      <div class="palette-container">
+        <div class="color-palette" *ngFor="let color of savedColors; let i = index">
+          <div class="palette-preview">
+            <div class="color-box" [style.background]="color.color_1"></div>
+            <div class="color-box" [style.background]="color.color_2"></div>
+            <div class="color-box" [style.background]="color.color_3"></div>
+            <div class="color-box" [style.background]="color.color_4"></div>
+            <div class="color-box" [style.background]="color.color_5"></div>
+          </div>
+          <div class="palette-actions">
+            <button
+              class="btn-icon"
+              (click)="handleSetDefault(color.id)"
+              [class.active]="defaultColorId === color.id"
+              title="Set as default"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2L2 7l4.5 4.5 5.5 5.5 5.5-5.5 4.5-4.5z"/>
+              </svg>
+            </button>
+            <button
+              class="btn-icon"
+              (click)="handleEdit(i)"
+              title="Edit"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </button>
+            <button
+              class="btn-icon"
+              (click)="handleDelete(color.id)"
+              title="Delete"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

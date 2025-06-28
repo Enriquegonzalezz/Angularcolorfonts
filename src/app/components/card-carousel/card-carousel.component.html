@@ -1,0 +1,59 @@
+<div class="carousel-container">
+  <button 
+    class="carousel-button prev" 
+    (click)="scroll('prev')"
+    [disabled]="currentIndex === 0"
+    aria-label="Anterior"
+  >
+    <span class="material-icons">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </span>
+  </button>
+
+  <div class="carousel-wrapper">
+    <div #cardsContainer class="cards-container">
+      <div 
+        *ngFor="let card of cards; trackBy: trackByFn"
+        class="card"
+      >
+        <div class="card-image">
+          <img [src]="card.imageUrl" [alt]="card.title">
+        </div>
+        <div class="card-content">
+          <h3 class="card-title">{{ card.title }}</h3>
+          <p class="card-description">{{ card.description }}</p>
+          <button class="card-button">
+            {{ card.buttonText }}
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <button 
+    class="carousel-button next" 
+    (click)="scroll('next')"
+    [disabled]="currentIndex >= cards.length - visibleCards"
+    aria-label="Siguiente"
+  >
+    <span class="material-icons">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M9 18l6-6-6-6"/>
+      </svg>
+    </span>
+  </button>
+
+  <div class="carousel-indicators">
+    <button 
+      *ngFor="let _ of [].constructor(cards.length - visibleCards + 1); let i = index" 
+      [class.active]="i === currentIndex"
+      (click)="scrollToIndex(i)"
+      [attr.aria-label]="'Ir a la tarjeta ' + (i + 1)"
+    ></button>
+  </div>
+</div>

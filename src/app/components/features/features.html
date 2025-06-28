@@ -1,0 +1,31 @@
+<section id="features" class="features-section">
+  <h2 class="features-title">
+    Many
+    <span class="features-title-highlight">Great Features</span>
+  </h2>
+
+  <div class="features-badges">
+    <div class="badge" *ngFor="let feature of featureList">
+      {{ feature }}
+    </div>
+  </div>
+
+  <div class="features-grid">
+    <div class="feature-card" *ngFor="let feature of features">
+      <div class="feature-header">
+        <h3 class="feature-title">{{ feature.title }}</h3>
+      </div>
+
+      <div class="feature-content">
+        {{ feature.description }}
+      </div>
+
+      <div class="feature-footer">
+        <img
+          [src]="feature.image"
+          alt="About feature"
+          class="feature-image">
+      </div>
+    </div>
+  </div>
+</section>
