@@ -85,6 +85,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     localStorage.removeItem("access_token");
     this.isLoggedIn = false;
     this.router.navigate(['/']);
+    window.location.reload();
   }
 
   toggleMenu() {

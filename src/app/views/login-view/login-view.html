@@ -43,7 +43,7 @@
 
         <button
           type="submit"
-          class="w-full bg-green-600 hover:bg-green-700 text-white border-2 border-green-500 py-5 font-medium rounded"
+          class="w-full bg-green-600 hover:bg-green-700 text-white border-2 border-green-500 py-4 font-bold rounded focus:outline-none focus:shadow-outline"
           [disabled]="isLoading"
           style="transition: background-color 0.2s;">
           <span *ngIf="isLoading" class="animate-pulse flex items-center justify-center gap-2">
@@ -68,7 +68,7 @@
           Don't have an account?
           <a 
             routerLink="/signup" 
-            class="text-green-400 hover:underline font-medium"
+            class="text-green-400 hover:text-green-300 hover:underline font-medium cursor-pointer"
             style="text-shadow: 0 0 5px rgba(74, 222, 128, 0.3);">
             Sign up now
           </a>
