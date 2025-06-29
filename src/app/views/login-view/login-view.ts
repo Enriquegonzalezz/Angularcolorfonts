@@ -1,16 +1,15 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
-import { NavbarComponent } from '../../components/navbar/navbar';
 
 @Component({
   selector: 'app-login-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './login-view.html',
-  styleUrls: ['./login-view.css']
+  styleUrl: './login-view.css'
 })
 export class LoginViewComponent {
   formData = { email: '', password: '' };
@@ -46,7 +45,7 @@ export class LoginViewComponent {
       this.isLoading = false;
       alert('Login exitoso: ' + response.message);
     } catch (err: any) {
-      if (err.status === 400) {
+      if (err.response && err.response.status === 400) {
         this.error = 'Ocurrió un error inesperado. Inténtalo de nuevo.';
       } else {
         this.error = 'Usuario o contraseña incorrectos, vuelva a intentarlo.';

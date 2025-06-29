@@ -202,3 +202,30 @@
     }
   }
 }
+
+/* Estilos para los botones de admin */
+.admin-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+@media (min-width: 768px) {
+  .admin-buttons {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
+.admin-buttons .btn {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .admin-buttons .btn {
+    width: auto;
+    flex: 0 1 auto;
+  }
+}

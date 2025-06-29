@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { NavbarComponent } from '../../components/navbar/navbar';
 
 interface FontRow {
   id: number;
@@ -13,12 +12,13 @@ interface FontRow {
   tamano_2: number;
   tamano_3: number;
   is_default: boolean;
+  predeterminado?: number; // Para compatibilidad con el backend
 }
 
 @Component({
   selector: 'app-fonts-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './fonts-view.html',
   styleUrl: './fonts-view.css'
 })
@@ -32,6 +32,10 @@ export class FontsViewComponent implements OnInit, OnDestroy {
   FONT_BASE_URL = 'http://localhost:3000/public/fonts/';
   private styleElement1: HTMLStyleElement | null = null;
   private styleElement2: HTMLStyleElement | null = null;
+
+  // Hacer Math y Number disponibles en el template
+  Math = Math;
+  Number = Number;
 
   constructor(
     private http: HttpClient,
@@ -70,27 +74,27 @@ export class FontsViewComponent implements OnInit, OnDestroy {
   }
 
   fetchFonts() {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<FontRow[]>('http://localhost:3000/fonts')
+    this.http.get<FontRow[]>('http://localhost:3000/fonts', { headers })
       .subscribe({
         next: (data) => {
           this.savedFonts = Array.isArray(data) ? data : [data];
           // Find the default font set
-          const defaultFont = data.find(font => font.is_default);
+          const defaultFont = data.find(font => font.is_default || font.predeterminado === 1);
           if (defaultFont) {
             this.defaultFontId = defaultFont.id;
           }
         },
         error: (error) => {
           console.error('Error al obtener las fuentes:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -129,11 +133,11 @@ export class FontsViewComponent implements OnInit, OnDestroy {
   }
 
   handleSave() {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     const formData = new FormData();
     if (this.fontFiles[0]) formData.append('fuente_1', this.fontFiles[0]);
@@ -141,11 +145,10 @@ export class FontsViewComponent implements OnInit, OnDestroy {
     formData.append('tamano_1', this.sizes.paragraph.toString());
     formData.append('tamano_2', this.sizes.subtitle.toString());
     formData.append('tamano_3', this.sizes.title.toString());
-    formData.append('is_default', this.defaultFontId === null ? 'true' : 'false');
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.post('http://localhost:3000/fonts/store', formData)
+    this.http.post('http://localhost:3000/fonts/store', formData, { headers })
       .subscribe({
         next: () => {
           this.fetchFonts();
@@ -153,33 +156,33 @@ export class FontsViewComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al guardar las fuentes:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
 
   handleDelete(fontId: number) {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     // If deleting default font, clear defaultFontId
     if (this.defaultFontId === fontId) {
       this.defaultFontId = null;
     }
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.delete(`http://localhost:3000/fonts/delete/${fontId}`)
+    this.http.delete(`http://localhost:3000/fonts/delete/${fontId}`, { headers })
       .subscribe({
         next: () => {
           this.savedFonts = this.savedFonts.filter(row => row.id !== fontId);
         },
         error: (error) => {
           console.error('Error al eliminar la fuente:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -195,7 +198,7 @@ export class FontsViewComponent implements OnInit, OnDestroy {
     this.fontFiles = [null, null];
     this.fontUrls = [row.fuente_1, row.fuente_2];
 
-    if (row.is_default) {
+    if (row.is_default || row.predeterminado === 1) {
       this.defaultFontId = row.id;
     }
 
@@ -205,22 +208,21 @@ export class FontsViewComponent implements OnInit, OnDestroy {
   handleUpdate() {
     if (this.editRow === null) return;
 
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
     const fontId = this.savedFonts[this.editRow].id;
     const fontData = {
       tamano_1: this.sizes.paragraph,
       tamano_2: this.sizes.subtitle,
-      tamano_3: this.sizes.title,
-      is_default: this.defaultFontId === fontId
+      tamano_3: this.sizes.title
     };
 
-    this.http.put(`http://localhost:3000/fonts/update/${fontId}`, fontData)
+    this.http.put(`http://localhost:3000/fonts/update/${fontId}`, fontData, { headers })
       .subscribe({
         next: () => {
           this.fetchFonts();
@@ -229,6 +231,7 @@ export class FontsViewComponent implements OnInit, OnDestroy {
         },
         error: (error) => {
           console.error('Error al actualizar las fuentes:', error);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -269,11 +272,11 @@ export class FontsViewComponent implements OnInit, OnDestroy {
   }
 
   handleSetDefault(fontId: number) {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     if (this.defaultFontId === fontId) {
       this.defaultFontId = null;
@@ -289,18 +292,51 @@ export class FontsViewComponent implements OnInit, OnDestroy {
       });
 
       // Save changes to the server
-      // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       this.http.put(`http://localhost:3000/fonts/update/${fontId}`, {
         is_default: true
-      }).subscribe({
+      }, { headers }).subscribe({
         next: () => {
           console.log('Default font updated successfully');
         },
         error: (error) => {
           console.error('Error updating default font:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
     }
+  }
+
+  // Nuevo método para manejar el toggle de predeterminado como en React
+  handleToggleDefault(fontId: number) {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    
+    this.http.put(`http://localhost:3000/fonts/update/predeterminado/${fontId}`, {}, { headers })
+      .subscribe({
+        next: () => {
+          console.log('Predeterminado actualizado exitosamente');
+          this.fetchFonts(); // Refrescar la lista
+        },
+        error: (error) => {
+          console.error('Error al actualizar el predeterminado:', error);
+          this.router.navigate(['/login']);
+        }
+      });
+  }
+
+  // Método para navegar a la página de colores
+  goToColors() {
+    this.router.navigate(['/colors']);
+  }
+
+  // Método para regresar al home
+  goToHome() {
+    this.router.navigate(['/']);
   }
 }
