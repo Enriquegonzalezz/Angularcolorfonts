@@ -4,6 +4,7 @@
   padding: 6rem 1rem;
   display: flex;
   flex-direction: column;
+  background-color: #FFF;
   gap: 2rem;
 }
 
@@ -27,7 +28,7 @@
 }
 
 .features-title-highlight {
-  background: linear-gradient(to bottom, var(--primary) / 0.6, var(--primary));
+  background: #000000;
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
