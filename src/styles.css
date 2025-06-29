@@ -1,3 +1,6 @@
+/* Leaflet Map Styles */
+@import 'leaflet/dist/leaflet.css';
+
 /* CSS Variables for theme */
 :root {
   --background: #ffffff;
@@ -179,4 +182,86 @@ body {
       right: 100px;
     }
   }
+}
+
+/* Leaflet Map Styles */
+.leaflet-container {
+  height: 400px !important;
+  width: 100% !important;
+  border-radius: 0.5rem;
+  border: 1px solid var(--border);
+  background-color: #f8f9fa;
+  z-index: 1;
+}
+
+.leaflet-popup-content {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.875rem;
+}
+
+.leaflet-control-zoom {
+  border: 1px solid var(--border) !important;
+  background: var(--card) !important;
+}
+
+.leaflet-control-zoom a {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--accent) !important;
+}
+
+.leaflet-tile-pane {
+  filter: brightness(0.9) contrast(1.1);
+}
+
+/* Map container styles */
+.map-container {
+  position: relative;
+  margin: 1rem 0;
+  min-height: 400px;
+}
+
+.map-instructions {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  font-size: 0.75rem;
+  z-index: 1000;
+  max-width: 200px;
+}
+
+/* Fallback para cuando el mapa no carga */
+#map:empty::before {
+  content: "Cargando mapa...";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  font-size: 1rem;
+  border: 2px dashed #dee2e6;
+  border-radius: 0.5rem;
+}
+
+/* Dark mode adjustments for map */
+.dark .leaflet-container {
+  background: var(--background);
+}
+
+.dark .leaflet-control-zoom {
+  background: var(--card) !important;
+}
+
+.dark .leaflet-control-zoom a {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
 }

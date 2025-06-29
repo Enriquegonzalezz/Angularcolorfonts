@@ -1,0 +1,966 @@
+<div class="min-h-screen bg-background py-8">
+  <div class="container mx-auto px-4">
+    <div class="max-w-6xl mx-auto">
+      <div class="bg-card rounded-xl shadow-sm border p-6 md:p-8">
+        <h1 class="text-3xl font-bold text-green-400 text-center mb-2">
+          Registro de Usuario Completo
+        </h1>
+        <p class="text-muted-foreground text-center mb-8">
+          Complete todos los campos para crear un perfil de usuario completo
+        </p>
+
+        <!-- Progress Bar -->
+        <div class="mb-8">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-sm font-medium text-foreground">
+              Paso {{ currentStep }} de {{ totalSteps }}
+            </span>
+            <span class="text-sm text-muted-foreground">
+              {{ Math.round(progressPercentage) }}% completado
+            </span>
+          </div>
+          <div class="w-full bg-muted rounded-full h-2">
+            <div
+              class="bg-green-600 h-2 rounded-full transition-all duration-300 ease-in-out"
+              [style.width.%]="progressPercentage"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Step Indicators -->
+        <div class="flex items-center justify-between mb-8 overflow-x-auto">
+          <div
+            *ngFor="let step of steps; let i = index"
+            class="flex items-center min-w-0"
+          >
+            <div
+              class="flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200 cursor-pointer flex-shrink-0"
+              [class]="getStepStatus(step.id) === 'completed' ? 'bg-green-600 border-green-600 text-white' :
+                       getStepStatus(step.id) === 'current' ? 'border-green-600 text-green-600 bg-green-50' :
+                       'border-muted text-muted-foreground'"
+              (click)="goToStep(step.id)"
+              [class.cursor-not-allowed]="!canGoToStep(step.id)"
+            >
+              <span *ngIf="getStepStatus(step.id) === 'completed'" class="text-sm">✓</span>
+              <span *ngIf="getStepStatus(step.id) !== 'completed'" class="text-sm font-medium">{{ step.id }}</span>
+            </div>
+            <div *ngIf="i < steps.length - 1" class="flex-1 h-0.5 mx-2 transition-all duration-200 min-w-4"
+                 [class]="getStepStatus(step.id) === 'completed' ? 'bg-green-600' : 'bg-muted'">
+            </div>
+          </div>
+        </div>
+
+        <!-- Step Titles -->
+        <div class="text-center mb-8">
+          <h2 class="text-2xl font-semibold text-foreground mb-2">
+            {{ currentStepData?.title }}
+          </h2>
+          <p class="text-muted-foreground">
+            {{ currentStepData?.description }}
+          </p>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Step 1: Información Personal -->
+          <div *ngIf="currentStep === 1" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="firstName" class="block text-sm font-medium text-foreground mb-2">
+                  Nombre *
+                </label>
+                <input
+                  id="firstName"
+                  type="text"
+                  formControlName="firstName"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('firstName')"
+                  placeholder="Ingrese su nombre"
+                />
+                <p *ngIf="getErrorMessage('firstName')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('firstName') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="lastName" class="block text-sm font-medium text-foreground mb-2">
+                  Apellido *
+                </label>
+                <input
+                  id="lastName"
+                  type="text"
+                  formControlName="lastName"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('lastName')"
+                  placeholder="Ingrese su apellido"
+                />
+                <p *ngIf="getErrorMessage('lastName')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('lastName') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="maidenName" class="block text-sm font-medium text-foreground mb-2">
+                  Apellido de Soltera
+                </label>
+                <input
+                  id="maidenName"
+                  type="text"
+                  formControlName="maidenName"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Apellido de soltera (opcional)"
+                />
+              </div>
+
+              <div>
+                <label for="age" class="block text-sm font-medium text-foreground mb-2">
+                  Edad *
+                </label>
+                <input
+                  id="age"
+                  type="number"
+                  formControlName="age"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('age')"
+                  placeholder="Ingrese su edad"
+                  min="1"
+                  max="120"
+                />
+                <p *ngIf="getErrorMessage('age')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('age') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="gender" class="block text-sm font-medium text-foreground mb-2">
+                  Género *
+                </label>
+                <select
+                  id="gender"
+                  formControlName="gender"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('gender')"
+                >
+                  <option value="">Seleccione un género</option>
+                  <option value="male">Masculino</option>
+                  <option value="female">Femenino</option>
+                  <option value="other">Otro</option>
+                </select>
+                <p *ngIf="getErrorMessage('gender')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('gender') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="email" class="block text-sm font-medium text-foreground mb-2">
+                  Email *
+                </label>
+                <input
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('email')"
+                  placeholder="ejemplo@correo.com"
+                />
+                <p *ngIf="getErrorMessage('email')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('email') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="phone" class="block text-sm font-medium text-foreground mb-2">
+                  Teléfono *
+                </label>
+                <input
+                  id="phone"
+                  type="tel"
+                  formControlName="phone"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('phone')"
+                  placeholder="+1 (555) 123-4567"
+                />
+                <p *ngIf="getErrorMessage('phone')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('phone') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="username" class="block text-sm font-medium text-foreground mb-2">
+                  Nombre de Usuario *
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  formControlName="username"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('username')"
+                  placeholder="nombreusuario"
+                />
+                <p *ngIf="getErrorMessage('username')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('username') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="password" class="block text-sm font-medium text-foreground mb-2">
+                  Contraseña *
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  formControlName="password"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('password')"
+                  placeholder="Mínimo 6 caracteres"
+                />
+                <p *ngIf="getErrorMessage('password')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('password') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="birthDate" class="block text-sm font-medium text-foreground mb-2">
+                  Fecha de Nacimiento *
+                </label>
+                <input
+                  id="birthDate"
+                  type="date"
+                  formControlName="birthDate"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('birthDate')"
+                />
+                <p *ngIf="getErrorMessage('birthDate')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('birthDate') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 2: Características Físicas -->
+          <div *ngIf="currentStep === 2" class="space-y-4">
+            <!-- Botón temporal de debug -->
+            <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+              <button
+                type="button"
+                (click)="debugStep2()"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded text-sm"
+              >
+                🔍 Debug Paso 2
+              </button>
+              <p class="text-sm mt-2">Haz clic para ver el estado de validación en la consola</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="image" class="block text-sm font-medium text-foreground mb-2">
+                  URL de Imagen
+                </label>
+                <input
+                  id="image"
+                  type="url"
+                  formControlName="image"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="https://ejemplo.com/imagen.jpg"
+                />
+              </div>
+
+              <div>
+                <label for="bloodGroup" class="block text-sm font-medium text-foreground mb-2">
+                  Grupo Sanguíneo *
+                </label>
+                <select
+                  id="bloodGroup"
+                  formControlName="bloodGroup"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bloodGroup')"
+                >
+                  <option value="">Seleccione grupo sanguíneo</option>
+                  <option *ngFor="let group of bloodGroups" [value]="group">{{ group }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('bloodGroup')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bloodGroup') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="height" class="block text-sm font-medium text-foreground mb-2">
+                  Altura (cm) *
+                </label>
+                <input
+                  id="height"
+                  type="number"
+                  formControlName="height"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('height')"
+                  placeholder="170"
+                  min="50"
+                  max="250"
+                />
+                <p *ngIf="getErrorMessage('height')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('height') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="weight" class="block text-sm font-medium text-foreground mb-2">
+                  Peso (kg) *
+                </label>
+                <input
+                  id="weight"
+                  type="number"
+                  formControlName="weight"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('weight')"
+                  placeholder="70"
+                  min="20"
+                  max="300"
+                />
+                <p *ngIf="getErrorMessage('weight')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('weight') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="eyeColor" class="block text-sm font-medium text-foreground mb-2">
+                  Color de Ojos *
+                </label>
+                <select
+                  id="eyeColor"
+                  formControlName="eyeColor"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('eyeColor')"
+                >
+                  <option value="">Seleccione color de ojos</option>
+                  <option *ngFor="let color of eyeColors" [value]="color">{{ color }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('eyeColor')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('eyeColor') }}
+                </p>
+              </div>
+
+              <!-- FormGroup para hair -->
+              <div formGroupName="hair">
+                <div>
+                  <label for="hairColor" class="block text-sm font-medium text-foreground mb-2">
+                    Color de Cabello *
+                  </label>
+                  <select
+                    id="hairColor"
+                    formControlName="color"
+                    [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('hair.color')"
+                  >
+                    <option value="">Seleccione color de cabello</option>
+                    <option *ngFor="let color of hairColors" [value]="color">{{ color }}</option>
+                  </select>
+                  <p *ngIf="getErrorMessage('hair.color')" class="text-red-500 text-xs mt-1">
+                    {{ getErrorMessage('hair.color') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label for="hairType" class="block text-sm font-medium text-foreground mb-2">
+                    Tipo de Cabello *
+                  </label>
+                  <select
+                    id="hairType"
+                    formControlName="type"
+                    [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('hair.type')"
+                  >
+                    <option value="">Seleccione tipo de cabello</option>
+                    <option *ngFor="let type of hairTypes" [value]="type">{{ type }}</option>
+                  </select>
+                  <p *ngIf="getErrorMessage('hair.type')" class="text-red-500 text-xs mt-1">
+                    {{ getErrorMessage('hair.type') }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 3: Dirección Personal -->
+          <div *ngIf="currentStep === 3" class="space-y-6">
+            <!-- Botón temporal para llenar dirección -->
+            <div class="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded mb-4">
+              <button
+                type="button"
+                (click)="fillSampleAddress()"
+                class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm mr-2"
+              >
+                📍 Llenar Dirección de Ejemplo
+              </button>
+              <p class="text-sm mt-2">Haz clic para llenar automáticamente los campos de dirección (para pruebas)</p>
+            </div>
+
+            <!-- Mapa -->
+            <div class="map-container">
+              <div class="map-instructions">
+                💡 Haz clic en el mapa para seleccionar tu ubicación
+              </div>
+              <div id="map"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="md:col-span-2">
+                <label for="address" class="block text-sm font-medium text-foreground mb-2">
+                  Dirección *
+                </label>
+                <input
+                  id="address"
+                  type="text"
+                  formControlName="address.address"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.address')"
+                  placeholder="Calle, número, apartamento"
+                />
+                <p *ngIf="getErrorMessage('address.address')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.address') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="city" class="block text-sm font-medium text-foreground mb-2">
+                  Ciudad *
+                </label>
+                <input
+                  id="city"
+                  type="text"
+                  formControlName="address.city"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.city')"
+                  placeholder="Ingrese la ciudad"
+                />
+                <p *ngIf="getErrorMessage('address.city')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.city') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="state" class="block text-sm font-medium text-foreground mb-2">
+                  Estado/Provincia *
+                </label>
+                <input
+                  id="state"
+                  type="text"
+                  formControlName="address.state"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.state')"
+                  placeholder="Ingrese el estado"
+                />
+                <p *ngIf="getErrorMessage('address.state')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.state') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="stateCode" class="block text-sm font-medium text-foreground mb-2">
+                  Código de Estado *
+                </label>
+                <input
+                  id="stateCode"
+                  type="text"
+                  formControlName="address.stateCode"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.stateCode')"
+                  placeholder="Ej: CA, NY, TX"
+                />
+                <p *ngIf="getErrorMessage('address.stateCode')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.stateCode') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="postalCode" class="block text-sm font-medium text-foreground mb-2">
+                  Código Postal *
+                </label>
+                <input
+                  id="postalCode"
+                  type="text"
+                  formControlName="address.postalCode"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.postalCode')"
+                  placeholder="12345"
+                />
+                <p *ngIf="getErrorMessage('address.postalCode')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.postalCode') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="country" class="block text-sm font-medium text-foreground mb-2">
+                  País *
+                </label>
+                <input
+                  id="country"
+                  type="text"
+                  formControlName="address.country"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('address.country')"
+                  placeholder="Ingrese el país"
+                />
+                <p *ngIf="getErrorMessage('address.country')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('address.country') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 4: Información Académica y Laboral -->
+          <div *ngIf="currentStep === 4" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="macAddress" class="block text-sm font-medium text-foreground mb-2">
+                  Dirección MAC
+                </label>
+                <input
+                  id="macAddress"
+                  type="text"
+                  formControlName="macAddress"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="00:1B:44:11:3A:B7"
+                />
+              </div>
+
+              <div>
+                <label for="university" class="block text-sm font-medium text-foreground mb-2">
+                  Universidad *
+                </label>
+                <input
+                  id="university"
+                  type="text"
+                  formControlName="university"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('university')"
+                  placeholder="Nombre de la universidad"
+                />
+                <p *ngIf="getErrorMessage('university')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('university') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- FormGroup para company -->
+            <div formGroupName="company" class="space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="department" class="block text-sm font-medium text-foreground mb-2">
+                    Departamento *
+                  </label>
+                  <select
+                    id="department"
+                    formControlName="department"
+                    [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.department')"
+                  >
+                    <option value="">Seleccione departamento</option>
+                    <option *ngFor="let dept of departments" [value]="dept">{{ dept }}</option>
+                  </select>
+                  <p *ngIf="getErrorMessage('company.department')" class="text-red-500 text-xs mt-1">
+                    {{ getErrorMessage('company.department') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label for="companyName" class="block text-sm font-medium text-foreground mb-2">
+                    Nombre de la Empresa *
+                  </label>
+                  <input
+                    id="companyName"
+                    type="text"
+                    formControlName="name"
+                    [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.name')"
+                    placeholder="Nombre de la empresa"
+                  />
+                  <p *ngIf="getErrorMessage('company.name')" class="text-red-500 text-xs mt-1">
+                    {{ getErrorMessage('company.name') }}
+                  </p>
+                </div>
+
+                <div>
+                  <label for="jobTitle" class="block text-sm font-medium text-foreground mb-2">
+                    Cargo *
+                  </label>
+                  <input
+                    id="jobTitle"
+                    type="text"
+                    formControlName="title"
+                    [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.title')"
+                    placeholder="Título del cargo"
+                  />
+                  <p *ngIf="getErrorMessage('company.title')" class="text-red-500 text-xs mt-1">
+                    {{ getErrorMessage('company.title') }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Dirección de la empresa -->
+              <div>
+                <h3 class="text-lg font-medium text-foreground mb-4">Dirección de la Empresa</h3>
+
+                <!-- FormGroup para company.address -->
+                <div formGroupName="address" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="md:col-span-2">
+                    <label for="companyAddress" class="block text-sm font-medium text-foreground mb-2">
+                      Dirección de la Empresa *
+                    </label>
+                    <input
+                      id="companyAddress"
+                      type="text"
+                      formControlName="address"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.address')"
+                      placeholder="Dirección de la empresa"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.address')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.address') }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label for="companyCity" class="block text-sm font-medium text-foreground mb-2">
+                      Ciudad de la Empresa *
+                    </label>
+                    <input
+                      id="companyCity"
+                      type="text"
+                      formControlName="city"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.city')"
+                      placeholder="Ciudad de la empresa"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.city')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.city') }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label for="companyState" class="block text-sm font-medium text-foreground mb-2">
+                      Estado de la Empresa *
+                    </label>
+                    <input
+                      id="companyState"
+                      type="text"
+                      formControlName="state"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.state')"
+                      placeholder="Estado de la empresa"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.state')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.state') }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label for="companyStateCode" class="block text-sm font-medium text-foreground mb-2">
+                      Código de Estado de la Empresa *
+                    </label>
+                    <input
+                      id="companyStateCode"
+                      type="text"
+                      formControlName="stateCode"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.stateCode')"
+                      placeholder="Ej: CA, NY, TX"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.stateCode')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.stateCode') }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label for="companyPostalCode" class="block text-sm font-medium text-foreground mb-2">
+                      Código Postal de la Empresa *
+                    </label>
+                    <input
+                      id="companyPostalCode"
+                      type="text"
+                      formControlName="postalCode"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.postalCode')"
+                      placeholder="12345"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.postalCode')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.postalCode') }}
+                    </p>
+                  </div>
+
+                  <div>
+                    <label for="companyCountry" class="block text-sm font-medium text-foreground mb-2">
+                      País de la Empresa *
+                    </label>
+                    <input
+                      id="companyCountry"
+                      type="text"
+                      formControlName="country"
+                      [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('company.address.country')"
+                      placeholder="País de la empresa"
+                    />
+                    <p *ngIf="getErrorMessage('company.address.country')" class="text-red-500 text-xs mt-1">
+                      {{ getErrorMessage('company.address.country') }}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 5: Información Bancaria -->
+          <div *ngIf="currentStep === 5" class="space-y-4">
+            <!-- Botón temporal para llenar datos bancarios -->
+            <div class="bg-purple-100 border border-purple-400 text-purple-700 px-4 py-3 rounded mb-4">
+              <button
+                type="button"
+                (click)="fillSampleBankData()"
+                class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm mr-2"
+              >
+                💳 Llenar Datos Bancarios de Ejemplo
+              </button>
+              <p class="text-sm mt-2">Haz clic para llenar automáticamente los campos bancarios (para pruebas)</p>
+            </div>
+
+            <!-- FormGroup para bank -->
+            <div formGroupName="bank" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="cardExpire" class="block text-sm font-medium text-foreground mb-2">
+                  Fecha de Vencimiento *
+                </label>
+                <input
+                  id="cardExpire"
+                  type="text"
+                  formControlName="cardExpire"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bank.cardExpire')"
+                  placeholder="MM/YY"
+                />
+                <p *ngIf="getErrorMessage('bank.cardExpire')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bank.cardExpire') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="cardNumber" class="block text-sm font-medium text-foreground mb-2">
+                  Número de Tarjeta *
+                </label>
+                <input
+                  id="cardNumber"
+                  type="text"
+                  formControlName="cardNumber"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bank.cardNumber')"
+                  placeholder="1234567890123456"
+                  maxlength="16"
+                />
+                <p *ngIf="getErrorMessage('bank.cardNumber')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bank.cardNumber') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="cardType" class="block text-sm font-medium text-foreground mb-2">
+                  Tipo de Tarjeta *
+                </label>
+                <select
+                  id="cardType"
+                  formControlName="cardType"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bank.cardType')"
+                >
+                  <option value="">Seleccione tipo de tarjeta</option>
+                  <option *ngFor="let type of cardTypes" [value]="type">{{ type }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('bank.cardType')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bank.cardType') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="currency" class="block text-sm font-medium text-foreground mb-2">
+                  Moneda *
+                </label>
+                <select
+                  id="currency"
+                  formControlName="currency"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bank.currency')"
+                >
+                  <option value="">Seleccione moneda</option>
+                  <option *ngFor="let curr of currencies" [value]="curr">{{ curr }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('bank.currency')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bank.currency') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="iban" class="block text-sm font-medium text-foreground mb-2">
+                  IBAN *
+                </label>
+                <input
+                  id="iban"
+                  type="text"
+                  formControlName="iban"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('bank.iban')"
+                  placeholder="ES9121000418450200051332"
+                />
+                <p *ngIf="getErrorMessage('bank.iban')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('bank.iban') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Campos opcionales fuera del FormGroup bank -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="ein" class="block text-sm font-medium text-foreground mb-2">
+                  EIN
+                </label>
+                <input
+                  id="ein"
+                  type="text"
+                  formControlName="ein"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="12-3456789"
+                />
+              </div>
+
+              <div>
+                <label for="ssn" class="block text-sm font-medium text-foreground mb-2">
+                  SSN
+                </label>
+                <input
+                  id="ssn"
+                  type="text"
+                  formControlName="ssn"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="123-45-6789"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Step 6: Configuración Final -->
+          <div *ngIf="currentStep === 6" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="userAgent" class="block text-sm font-medium text-foreground mb-2">
+                  User Agent
+                </label>
+                <input
+                  id="userAgent"
+                  type="text"
+                  formControlName="userAgent"
+                  class="w-full px-4 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                  placeholder="Mozilla/5.0..."
+                />
+              </div>
+
+              <div>
+                <label for="role" class="block text-sm font-medium text-foreground mb-2">
+                  Rol *
+                </label>
+                <select
+                  id="role"
+                  formControlName="role"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('role')"
+                >
+                  <option value="">Seleccione rol</option>
+                  <option *ngFor="let role of roles" [value]="role">{{ role }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('role')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('role') }}
+                </p>
+              </div>
+            </div>
+
+            <!-- FormGroup para crypto -->
+            <div formGroupName="crypto" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="cryptoCoin" class="block text-sm font-medium text-foreground mb-2">
+                  Criptomoneda *
+                </label>
+                <select
+                  id="cryptoCoin"
+                  formControlName="coin"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('crypto.coin')"
+                >
+                  <option value="">Seleccione criptomoneda</option>
+                  <option *ngFor="let coin of cryptoCoins" [value]="coin">{{ coin }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('crypto.coin')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('crypto.coin') }}
+                </p>
+              </div>
+
+              <div>
+                <label for="cryptoNetwork" class="block text-sm font-medium text-foreground mb-2">
+                  Red *
+                </label>
+                <select
+                  id="cryptoNetwork"
+                  formControlName="network"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('crypto.network')"
+                >
+                  <option value="">Seleccione red</option>
+                  <option *ngFor="let network of cryptoNetworks" [value]="network">{{ network }}</option>
+                </select>
+                <p *ngIf="getErrorMessage('crypto.network')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('crypto.network') }}
+                </p>
+              </div>
+
+              <div class="md:col-span-2">
+                <label for="cryptoWallet" class="block text-sm font-medium text-foreground mb-2">
+                  Dirección de Wallet *
+                </label>
+                <input
+                  id="cryptoWallet"
+                  type="text"
+                  formControlName="wallet"
+                  [class]="'w-full px-4 py-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 ' + getFieldClass('crypto.wallet')"
+                  placeholder="0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6"
+                />
+                <p *ngIf="getErrorMessage('crypto.wallet')" class="text-red-500 text-xs mt-1">
+                  {{ getErrorMessage('crypto.wallet') }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Navigation Buttons -->
+          <div class="flex justify-between pt-6 border-t border-border">
+            <button
+              type="button"
+              (click)="previousStep()"
+              [disabled]="currentStep === 1"
+              class="px-6 py-3 border border-input bg-background text-foreground font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent"
+            >
+              Anterior
+            </button>
+
+            <div class="flex gap-4">
+              <button
+                type="button"
+                (click)="onReset()"
+                [disabled]="isSubmitting"
+                class="px-6 py-3 bg-secondary hover:bg-secondary/80 text-secondary-foreground font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2"
+              >
+                Limpiar
+              </button>
+
+              <button
+                *ngIf="currentStep < totalSteps"
+                type="button"
+                (click)="nextStep()"
+                [disabled]="!isStepValid(currentStep)"
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                Siguiente
+              </button>
+
+              <button
+                *ngIf="currentStep === totalSteps"
+                type="submit"
+                [disabled]="isSubmitting"
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                <svg *ngIf="isSubmitting" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {{ isSubmitting ? 'Enviando...' : 'Enviar Formulario' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón para regresar al home (solo en paso 1) -->
+          <div *ngIf="currentStep === 1" class="mt-8 pt-6 border-t border-border">
+            <div class="text-center">
+              <button
+                type="button"
+                (click)="goToHome()"
+                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              >
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                🏠 Regresar al Home
+              </button>
+              <p class="text-sm text-muted-foreground mt-2">
+                ¿Cambiaste de opinión? Puedes volver al inicio en cualquier momento
+              </p>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

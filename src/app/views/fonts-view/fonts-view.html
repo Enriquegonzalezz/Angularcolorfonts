@@ -1,126 +1,160 @@
-<div class="min-h-screen bg-dark py-6 flex flex-col justify-center items-center sm:py-12">
-  <div class="relative py-3 sm:max-w-6xl sm:mx-auto">
-    <div class="absolute inset-0 bg-card border-2 border-green-500 shadow-lg rounded-3xl"></div>
-    <div class="relative px-4 py-10 bg-card border-2 border-green-500 shadow-lg rounded-3xl sm:p-12">
+<app-navbar></app-navbar>
+
+<div class="min-h-screen bg-background py-8">
+  <div class="container mx-auto px-4">
+    <div class="bg-card rounded-xl shadow-sm border p-6 md:p-8">
       <h1 class="text-2xl font-semibold text-green-400 text-center mb-6">
         Sube tus fuentes y define tamaños
       </h1>
-      <div class="mt-6 flex flex-col items-center gap-6">
-        <div class="flex flex-col gap-4">
-          <div *ngFor="let file of fontFiles; let idx = index" class="flex items-center space-x-4">
-            <label [for]="'font-file-' + idx" class="text-gray-200 font-medium">
-              Fuente {{ idx + 1 }}:
-            </label>
-            <input
-              [id]="'font-file-' + idx"
-              type="file"
-              [name]="'fuente_' + (idx + 1)"
-              accept=".ttf,.otf,.woff,.woff2"
-              (change)="handleFileChange(idx, $event)"
-              class="file:bg-green-600 file:hover:bg-green-700 file:text-white file:font-bold file:rounded file:border-none file:px-3 file:py-2 bg-[#23272e] border-2 border-green-500 text-gray-100 cursor-pointer w-56"
-            />
-            <span *ngIf="fontFiles[idx]" class="text-xs text-gray-300">{{ fontFiles[idx]?.name }}</span>
+      <p class="text-muted-foreground text-center mb-6">Personaliza las fuentes de tu aplicación</p>
+
+        <!-- Selector de fuentes -->
+         <div class="flex flex-col items-center text-white bg-[#FFF]">
+        <div class="space-y-6 justify-center flex flex-col w-">
+          <h3 class="text-lg font-medium">Carga tus fuentes</h3>
+          <div class="space-y-4">
+            <div *ngFor="let file of fontFiles; let idx = index" class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+              <label [for]="'font-file-' + idx" class="text-sm font-medium">
+                Fuente {{ idx + 1 }}
+              </label>
+              <div class="md:col-span-2">
+                <div class="flex items-center gap-2">
+                  <div class="relative flex-1">
+                    <input
+                      [id]="'font-file-' + idx"
+                      type="file"
+                      [name]="'fuente_' + (idx + 1)"
+                      accept=".ttf,.otf,.woff,.woff2"
+                      (change)="handleFileChange(idx, $event)"
+                      class="sr-only"
+                    />
+                    <label
+                      [for]="'font-file-' + idx"
+                      class="w-full flex items-center justify-between h-10 px-4 py-2 rounded-md border border-input bg-background text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground transition-colors"
+                    >
+                      <span class="truncate">
+                        {{ fontFiles[idx]?.name || 'Seleccionar archivo...' }}
+                      </span>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="ml-2 flex-shrink-0">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                      </svg>
+                    </label>
+                  </div>
+                  <div *ngIf="fontFiles[idx]" class="text-xs text-muted-foreground truncate max-w-[120px] md:max-w-[200px]">
+                    {{ fontFiles[idx]?.name }}
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div class="flex flex-col gap-2 mt-6">
-          <!-- Controles de tamaño -->
-          <div class="flex items-center gap-2">
-            <label class="text-gray-200 text-sm w-20">Párrafo:</label>
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('paragraph', Math.max(8, sizes.paragraph - 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <input
-              placeholder="Size"
-              type="number"
-              min="8"
-              max="72"
-              [ngModel]="sizes.paragraph"
-              (ngModelChange)="handleSizeChange('paragraph', $event)"
-              class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
-            />
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('paragraph', Math.min(72, sizes.paragraph + 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="18 15 12 9 6 15"></polyline>
-              </svg>
-            </button>
-            <span class="text-xs text-gray-400 ml-2">px</span>
-          </div>
+      </div>
+        <!-- Controles de tamaño -->
+        <div class="mt-2 space-y-4 flex flex-col items-center">
+          <h3 class="text-lg font-medium text-white">Configura tamaños</h3>
+          <div class="flex flex-col gap-3">
+            <div class="flex items-center gap-2">
+              <label class="text-gray-200 text-sm w-20">Párrafo:</label>
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('paragraph', Math.max(8, sizes.paragraph - 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <input
+                placeholder="Size"
+                type="number"
+                min="8"
+                max="72"
+                [ngModel]="sizes.paragraph"
+                (ngModelChange)="handleSizeChange('paragraph', $event)"
+                class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
+              />
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('paragraph', Math.min(72, sizes.paragraph + 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+              <span class="text-xs text-gray-400 ml-2">px</span>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <label class="text-gray-200 text-sm w-20">Subtítulo:</label>
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('subtitle', Math.max(8, sizes.subtitle - 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <input
-              placeholder="Size"
-              type="number"
-              min="8"
-              max="72"
-              [ngModel]="sizes.subtitle"
-              (ngModelChange)="handleSizeChange('subtitle', $event)"
-              class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
-            />
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('subtitle', Math.min(72, sizes.subtitle + 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="18 15 12 9 6 15"></polyline>
-              </svg>
-            </button>
-            <span class="text-xs text-gray-400 ml-2">px</span>
-          </div>
+            <div class="flex items-center gap-2">
+              <label class="text-gray-200 text-sm w-20">Subtítulo:</label>
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('subtitle', Math.max(8, sizes.subtitle - 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <input
+                placeholder="Size"
+                type="number"
+                min="8"
+                max="72"
+                [ngModel]="sizes.subtitle"
+                (ngModelChange)="handleSizeChange('subtitle', $event)"
+                class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
+              />
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('subtitle', Math.min(72, sizes.subtitle + 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+              <span class="text-xs text-gray-400 ml-2">px</span>
+            </div>
 
-          <div class="flex items-center gap-2">
-            <label class="text-gray-200 text-sm w-20">Título:</label>
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('title', Math.max(8, sizes.title - 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
-            </button>
-            <input
-              placeholder="Size"
-              type="number"
-              min="8"
-              max="100"
-              [ngModel]="sizes.title"
-              (ngModelChange)="handleSizeChange('title', $event)"
-              class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
-            />
-            <button
-              type="button"
-              class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
-              (click)="handleSizeChange('title', Math.min(100, sizes.title + 1))"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="18 15 12 9 6 15"></polyline>
-              </svg>
-            </button>
-            <span class="text-xs text-gray-400 ml-2">px</span>
+            <div class="flex items-center gap-2">
+              <label class="text-gray-200 text-sm w-20">Título:</label>
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('title', Math.max(8, sizes.title - 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              <input
+                placeholder="Size"
+                type="number"
+                min="8"
+                max="100"
+                [ngModel]="sizes.title"
+                (ngModelChange)="handleSizeChange('title', $event)"
+                class="w-16 h-8 px-3 py-2 rounded bg-[#141414] border-2 border-green-500 text-green-400 text-center font-medium"
+              />
+              <button
+                type="button"
+                class="p-1 rounded border border-green-500 text-green-400 hover:bg-green-700"
+                (click)="handleSizeChange('title', Math.min(100, sizes.title + 1))"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
+              </button>
+              <span class="text-xs text-gray-400 ml-2">px</span>
+            </div>
           </div>
         </div>
-        <div class="flex justify-between mt-8 w-full">
+
+        <!-- Botones de acción -->
+        <div class="flex justify-center gap-4 mt-6">
           <button
             type="button"
             (click)="editRow !== null ? handleUpdate() : handleSave()"
@@ -128,166 +162,168 @@
           >
             {{ editRow !== null ? "Actualizar" : "Guardar selección" }}
           </button>
-          <button
-            (click)="goToHome()"
-            class="bg-gray-800 hover:bg-gray-700 text-gray-100 font-bold py-2 px-4 rounded border border-green-500 focus:outline-none focus:shadow-outline"
-          >
-            Regresar
-          </button>
-          <button
-            (click)="goToColors()"
-            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded border border-green-500 focus:outline-none focus:shadow-outline"
-          >
-            Ir a Colores
-          </button>
-        </div>
-      </div>
-      <!-- PREVIEW -->
-      <div class="mt-10 bg-[#181b20] border border-green-700 rounded-2xl p-6 shadow-lg">
-        <h2 class="text-green-400 text-lg font-semibold mb-4">Vista previa</h2>
-        <div class="space-y-4">
-          <div>
-            <span class="text-gray-400 text-xs">Título</span>
-            <div
-              [style.font-family]="fontFamily2"
-              [style.font-size]="sizes.title + 'px'"
-              [style.font-weight]="700"
-              [style.color]="'#fff'"
+          <div class="flex gap-4">
+            <button
+              (click)="goToHome()"
+              class="bg-gray-800 hover:bg-gray-700 text-gray-100 font-bold py-2 px-4 rounded border border-green-500 focus:outline-none focus:shadow-outline"
             >
-              ¡Este es un título con tu fuente 2!
-            </div>
-          </div>
-          <div>
-            <span class="text-gray-400 text-xs">Subtítulo</span>
-            <div
-              [style.font-family]="fontFamily2"
-              [style.font-size]="sizes.subtitle + 'px'"
-              [style.font-weight]="500"
-              [style.color]="'#b3e5fc'"
+              Regresar
+            </button>
+            <button
+              (click)="goToColors()"
+              class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded border border-green-500 focus:outline-none focus:shadow-outline"
             >
-              Este es un subtítulo con tu fuente 2
-            </div>
-          </div>
-          <div>
-            <span class="text-gray-400 text-xs">Párrafo</span>
-            <div
-              [style.font-family]="fontFamily1"
-              [style.font-size]="sizes.paragraph + 'px'"
-              [style.font-weight]="400"
-              [style.color]="'#e0e0e0'"
-            >
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, urna eu tincidunt consectetur, nisi nisl aliquam nunc, eget aliquam massa nisl quis neque.
-            </div>
+              Ir a Colores
+            </button>
           </div>
         </div>
+
+        <!-- Vista previa -->
+        <div class="mt-8 bg-[#181b20] border border-green-700 rounded-2xl p-6 shadow-lg">
+          <h2 class="text-green-400 text-lg font-semibold mb-4">Vista previa</h2>
+          <div class="space-y-4">
+            <div>
+              <span class="text-gray-400 text-xs">Título</span>
+              <div
+                [style.font-family]="fontFamily2"
+                [style.font-size]="sizes.title + 'px'"
+                [style.font-weight]="700"
+                [style.color]="'#fff'"
+              >
+                ¡Este es un título con tu fuente 2!
+              </div>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs">Subtítulo</span>
+              <div
+                [style.font-family]="fontFamily2"
+                [style.font-size]="sizes.subtitle + 'px'"
+                [style.font-weight]="500"
+                [style.color]="'#b3e5fc'"
+              >
+                Este es un subtítulo con tu fuente 2
+              </div>
+            </div>
+            <div>
+              <span class="text-gray-400 text-xs">Párrafo</span>
+              <div
+                [style.font-family]="fontFamily1"
+                [style.font-size]="sizes.paragraph + 'px'"
+                [style.font-weight]="400"
+                [style.color]="'#e0e0e0'"
+              >
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin euismod, urna eu tincidunt consectetur, nisi nisl aliquam nunc, eget aliquam massa nisl quis neque.
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <!-- END PREVIEW -->
     </div>
-  </div>
-  <!-- Tabla CRUD en un recuadro aparte debajo, con el mismo ancho -->
-  <div class="relative py-3 sm:max-w-6xl sm:mx-auto mt-8">
-    <div class="absolute inset-0 bg-card border-2 border-green-500 shadow-lg rounded-3xl"></div>
-    <div class="relative px-4 py-10 bg-card border-2 border-green-500 shadow-lg rounded-3xl sm:p-12 w-full">
-      <h2 class="text-lg font-semibold text-green-400 mb-4">Tus selecciones</h2>
-      <div class="overflow-x-auto">
-        <table class="min-w-full bg-card border border-green-500 rounded-lg">
-          <thead>
-            <tr>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Fuente 1</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Fuente 2</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Párrafo</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Subtítulo</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Título</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Predeterminado</th>
-              <th class="px-2 py-2 text-green-400 border-b border-green-500">Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngIf="savedFonts.length === 0">
-              <td colspan="7" class="text-center text-gray-400 py-4">
-                No hay selecciones guardadas.
-              </td>
-            </tr>
-            <tr *ngFor="let row of savedFonts; let rowIdx = index">
-              <td class="px-2 py-2 text-center">
-                {{ row.fuente_1 }}
-                <a
-                  *ngIf="row.fuente_1"
-                  [href]="FONT_BASE_URL + row.fuente_1"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="ml-2 text-green-400 underline"
-                >
-                  Ver fuente
-                </a>
-              </td>
-              <td class="px-2 py-2 text-center">
-                {{ row.fuente_2 }}
-                <a
-                  *ngIf="row.fuente_2"
-                  [href]="FONT_BASE_URL + row.fuente_2"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="ml-2 text-green-400 underline"
-                >
-                  Ver fuente
-                </a>
-              </td>
-              <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_1 }}</td>
-              <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_2 }}</td>
-              <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_3 }}</td>
-              <td class="px-2 py-2 text-center">
-                <button
-                  (click)="row.predeterminado !== 1 ? handleToggleDefault(row.id) : null"
-                  class="p-1 rounded transition-colors"
-                  [class]="row.predeterminado === 1 ? 'bg-yellow-500/20 hover:bg-yellow-500/30' : 'hover:bg-gray-700'"
-                  [title]="row.predeterminado === 1 ? 'Predeterminado' : 'Establecer como predeterminado'"
-                  [disabled]="row.predeterminado === 1"
-                  [style.cursor]="row.predeterminado === 1 ? 'default' : 'pointer'"
-                >
-                  <svg 
-                    width="16" 
-                    height="16" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    stroke-width="2"
-                    [class]="row.predeterminado === 1 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'"
+
+    <!-- Tabla CRUD -->
+    <div class="relative">
+      <div class="absolute inset-0 bg-card border-2 border-green-500 shadow-lg rounded-3xl"></div>
+      <div class="relative px-4 py-10 bg-card border-2 border-green-500 shadow-lg rounded-3xl sm:p-12 w-full">
+        <h2 class="text-lg font-semibold text-green-400 mb-4">Tus selecciones</h2>
+        <div class="overflow-x-auto">
+          <table class="min-w-full bg-card border border-green-500 rounded-lg">
+            <thead>
+              <tr>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Fuente 1</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Fuente 2</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Párrafo</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Subtítulo</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Título</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Predeterminado</th>
+                <th class="px-2 py-2 text-green-400 border-b border-green-500">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="savedFonts.length === 0">
+                <td colspan="7" class="text-center text-gray-400 py-4">
+                  No hay selecciones guardadas.
+                </td>
+              </tr>
+              <tr *ngFor="let row of savedFonts; let rowIdx = index">
+                <td class="px-2 py-2 text-center">
+                  {{ row.fuente_1 }}
+                  <a
+                    *ngIf="row.fuente_1"
+                    [href]="FONT_BASE_URL + row.fuente_1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-2 text-green-400 underline"
                   >
-                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
-                  </svg>
-                </button>
-              </td>
-              <td class="px-2 py-2 flex gap-2 justify-center">
-                <button
-                  type="button"
-                  (click)="handleEdit(rowIdx)"
-                  class="p-1 rounded hover:bg-green-700"
-                  title="Modificar"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green-400">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  (click)="handleDelete(row.id)"
-                  class="p-1 rounded hover:bg-red-700"
-                  title="Eliminar"
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-400">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    <line x1="10" y1="11" x2="10" y2="17"></line>
-                    <line x1="14" y1="11" x2="14" y2="17"></line>
-                  </svg>
-                </button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                    Ver fuente
+                  </a>
+                </td>
+                <td class="px-2 py-2 text-center">
+                  {{ row.fuente_2 }}
+                  <a
+                    *ngIf="row.fuente_2"
+                    [href]="FONT_BASE_URL + row.fuente_2"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="ml-2 text-green-400 underline"
+                  >
+                    Ver fuente
+                  </a>
+                </td>
+                <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_1 }}</td>
+                <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_2 }}</td>
+                <td class="px-2 py-2 text-center text-gray-300">{{ row.tamano_3 }}</td>
+                <td class="px-2 py-2 text-center">
+                  <button
+                    (click)="row.predeterminado !== 1 ? handleToggleDefault(row.id) : null"
+                    class="p-1 rounded transition-colors"
+                    [class]="row.predeterminado === 1 ? 'bg-yellow-500/20 hover:bg-yellow-500/30' : 'hover:bg-gray-700'"
+                    [title]="row.predeterminado === 1 ? 'Predeterminado' : 'Establecer como predeterminado'"
+                    [disabled]="row.predeterminado === 1"
+                    [style.cursor]="row.predeterminado === 1 ? 'default' : 'pointer'"
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      [class]="row.predeterminado === 1 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400'"
+                    >
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                    </svg>
+                  </button>
+                </td>
+                <td class="px-2 py-2 flex gap-2 justify-center">
+                  <button
+                    type="button"
+                    (click)="handleEdit(rowIdx)"
+                    class="p-1 rounded hover:bg-green-700"
+                    title="Modificar"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-green-400">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    (click)="handleDelete(row.id)"
+                    class="p-1 rounded hover:bg-red-700"
+                    title="Eliminar"
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-400">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
-</div>

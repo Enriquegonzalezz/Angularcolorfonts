@@ -1,7 +1,7 @@
 <header class="navbar" [style.background]="colors[1]">
   <nav class="nav-container">
     <div class="nav-brand">
-      <a href="/" class="brand-link" 
+      <a href="/" class="brand-link"
          [style.color]="colors[0]"
          [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
          [style.font-size.px]="sizes.subtitle">
@@ -16,8 +16,8 @@
 
     <!-- Mobile menu button and toggle -->
     <div class="mobile-menu">
-      <button class="menu-toggle" 
-              (click)="toggleMenu()" 
+      <button class="menu-toggle"
+              (click)="toggleMenu()"
               title="Toggle menu"
               [style.color]="colors[0]">
         <svg class="menu-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -29,16 +29,16 @@
 
       <!-- Mobile menu overlay -->
       <div class="mobile-overlay" [class.open]="isOpen" (click)="closeMenu()">
-        <div class="mobile-menu-content" 
+        <div class="mobile-menu-content"
              (click)="$event.stopPropagation()"
              [style.background]="colors[3]">
           <div class="mobile-menu-header">
-            <h3 class="mobile-menu-title" 
+            <h3 class="mobile-menu-title"
                 [style.color]="colors[0]"
                 [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
                 [style.font-size.px]="sizes.subtitle">ColorFonts</h3>
-            <button class="close-button" 
-                    (click)="closeMenu()" 
+            <button class="close-button"
+                    (click)="closeMenu()"
                     title="Close menu"
                     [style.color]="colors[0]">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
@@ -88,6 +88,24 @@
         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
         [style.font-size.px]="sizes.paragraph">
         {{ route.label }}
+      </a>
+      <a
+        *ngIf="isLoggedIn"
+        href="/formulario"
+        class="nav-link"
+        [style.color]="colors[0]"
+        [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+        [style.font-size.px]="sizes.paragraph">
+        Formulario
+      </a>
+      <a
+        *ngIf="isLoggedIn"
+        href="/usuarios"
+        class="nav-link"
+        [style.color]="colors[0]"
+        [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+        [style.font-size.px]="sizes.paragraph">
+        Data Table de Usuarios
       </a>
     </nav>
 
