@@ -56,13 +56,13 @@
               <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Email</th>
               <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Rol</th>
               <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Estado</th>
-              <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Fecha Creación</th>
+              <th class="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Primer Nombre</th>
               <th class="px-4 py-3 text-center text-sm font-medium text-muted-foreground">Acciones</th>
             </tr>
           </thead>
           <tbody class="divide-y">
             <tr *ngIf="isLoading">
-              <td colspan="6" class="px-4 py-8 text-center text-sm text-muted-foreground">
+              <td colspan="7" class="px-4 py-8 text-center text-sm text-muted-foreground">
                 <div class="flex items-center justify-center">
                   <svg class="animate-spin h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -73,7 +73,7 @@
               </td>
             </tr>
             <tr *ngIf="!isLoading && paginatedUsers.length === 0">
-              <td colspan="6" class="px-4 py-8 text-center text-sm text-muted-foreground">
+              <td colspan="7" class="px-4 py-8 text-center text-sm text-muted-foreground">
                 No se encontraron usuarios.
               </td>
             </tr>
@@ -82,29 +82,37 @@
               <td class="px-4 py-3 text-sm font-medium">{{ user.username }}</td>
               <td class="px-4 py-3 text-sm">{{ user.email }}</td>
               <td class="px-4 py-3 text-sm">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {{ user.role || 'Usuario' }}
+                <span [class]="getUserRoleClass(user)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ getUserRoleText(user) }}
                 </span>
               </td>
               <td class="px-4 py-3 text-sm">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  {{ user.status || 'Activo' }}
+                <span [class]="getUserStatusClass(user)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ getUserStatusText(user) }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-sm text-muted-foreground">
-                {{ user.created_at ? (user.created_at | date:'short') : 'N/A' }}
-              </td>
+              <td class="px-4 py-3 text-sm text-muted-foreground">{{ user.first_name }}</td>
               <td class="px-4 py-3 text-center">
-                <button
-                  (click)="showDetails(user)"
-                  class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  title="Ver detalles"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                  </svg>
-                </button>
+                <div class="flex items-center justify-center gap-2">
+                  <button
+                    (click)="toggleUserStatus(user)"
+                    [class]="isUserActive(user) ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                    class="inline-flex items-center justify-center px-3 py-1 rounded-md text-white text-xs font-medium transition-colors"
+                    [title]="isUserActive(user) ? 'Deshabilitar usuario' : 'Habilitar usuario'"
+                  >
+                    {{ isUserActive(user) ? 'Deshabilitar' : 'Habilitar' }}
+                  </button>
+                  <button
+                    (click)="showDetails(user)"
+                    class="inline-flex items-center justify-center p-2 rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    title="Ver detalles"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                  </button>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -151,61 +159,301 @@
 </div>
 
 <!-- Modal de detalles del usuario -->
-<div *ngIf="showUserDetails" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-  <div class="bg-card rounded-lg shadow-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
-    <div class="p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold text-foreground">Detalles del Usuario</h2>
-        <button
-          (click)="closeDetails()"
-          class="text-muted-foreground hover:text-foreground transition-colors"
-          title="Cerrar"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+<div *ngIf="showUserDetails" class="modal-overlay">
+  <div class="modal-container">
+    <!-- Header -->
+    <div class="modal-header">
+      <h2 class="text-xl font-semibold text-foreground">Detalles del Usuario</h2>
+      <button
+        (click)="closeDetails()"
+        class="text-muted-foreground hover:text-foreground transition-colors"
+        title="Cerrar"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Content -->
+    <div class="modal-content">
+      <!-- Loading state -->
+      <div *ngIf="isLoadingDetails" class="flex items-center justify-center h-full">
+        <div class="flex items-center">
+          <svg class="animate-spin h-8 w-8 mr-3 text-green-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
-        </button>
-      </div>
-
-      <div *ngIf="selectedUser" class="space-y-4">
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">ID</label>
-          <p class="text-sm">{{ selectedUser.id }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">Usuario</label>
-          <p class="text-sm font-medium">{{ selectedUser.username }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">Email</label>
-          <p class="text-sm">{{ selectedUser.email }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">Rol</label>
-          <p class="text-sm">
-            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-              {{ selectedUser.role || 'Usuario' }}
-            </span>
-          </p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">Fecha de Creación</label>
-          <p class="text-sm">{{ selectedUser.created_at ? (selectedUser.created_at | date:'full') : 'N/A' }}</p>
-        </div>
-        <div>
-          <label class="text-sm font-medium text-muted-foreground">Última Actualización</label>
-          <p class="text-sm">{{ selectedUser.updated_at ? (selectedUser.updated_at | date:'full') : 'N/A' }}</p>
+          <span class="text-lg">Cargando detalles del usuario...</span>
         </div>
       </div>
 
-      <div class="flex justify-end mt-6">
-        <button
-          (click)="closeDetails()"
-          class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors"
-        >
-          Cerrar
-        </button>
+      <!-- User details -->
+      <div *ngIf="selectedUser && !isLoadingDetails" class="space-y-4">
+        <!-- Información básica -->
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información Básica</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">ID</label>
+              <p class="text-sm">{{ selectedUser.id }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Usuario</label>
+              <p class="text-sm font-medium">{{ selectedUser.username }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Email</label>
+              <p class="text-sm">{{ selectedUser.email }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Rol</label>
+              <p class="text-sm">
+                <span [class]="getUserRoleClass(selectedUser)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ getUserRoleText(selectedUser) }}
+                </span>
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Estado</label>
+              <p class="text-sm">
+                <span [class]="getUserStatusClass(selectedUser)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  {{ getUserStatusText(selectedUser) }}
+                </span>
+              </p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Primer Nombre</label>
+              <p class="text-sm">{{ selectedUser.first_name || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Apellido</label>
+              <p class="text-sm">{{ selectedUser.last_name || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Apellido de Soltera</label>
+              <p class="text-sm">{{ selectedUser.maiden_name || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información personal -->
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información Personal</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Edad</label>
+              <p class="text-sm">{{ selectedUser.age || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Género</label>
+              <p class="text-sm">{{ selectedUser.gender || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Teléfono</label>
+              <p class="text-sm">{{ selectedUser.phone || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Fecha de Nacimiento</label>
+              <p class="text-sm">{{ selectedUser.birth_date ? (selectedUser.birth_date | date:'short') : 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Grupo Sanguíneo</label>
+              <p class="text-sm">{{ selectedUser.blood_group || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Altura (cm)</label>
+              <p class="text-sm">{{ selectedUser.height_cm || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Peso (kg)</label>
+              <p class="text-sm">{{ selectedUser.weight_kg || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Color de Ojos</label>
+              <p class="text-sm">{{ selectedUser.eye_color || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información técnica -->
+        <div class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información Técnica</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">IP Address</label>
+              <p class="text-sm">{{ selectedUser.ip_address || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">MAC Address</label>
+              <p class="text-sm">{{ selectedUser.mac_address || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Universidad</label>
+              <p class="text-sm">{{ selectedUser.university || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">EIN</label>
+              <p class="text-sm">{{ selectedUser.ein || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">SSN</label>
+              <p class="text-sm">{{ selectedUser.ssn || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cabellos -->
+        <div *ngIf="selectedUser.cabellos" class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información de Cabello</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Color</label>
+              <p class="text-sm">{{ selectedUser.cabellos.color || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Tipo</label>
+              <p class="text-sm">{{ selectedUser.cabellos.type || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Direcciones -->
+        <div *ngIf="selectedUser.direcciones && selectedUser.direcciones.length > 0" class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Direcciones</h3>
+          <div class="space-y-3">
+            <div *ngFor="let direccion of selectedUser.direcciones; let i = index" class="border-l-4 border-green-400 pl-3 bg-muted/20 rounded-r">
+              <h4 class="font-medium text-sm mb-2 text-green-400">Dirección {{ i + 1 }}</h4>
+              <div class="space-y-1 text-sm">
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Dirección</label>
+                  <p>{{ direccion.address_line || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Ciudad</label>
+                  <p>{{ direccion.city || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Estado</label>
+                  <p>{{ direccion.state || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Código Postal</label>
+                  <p>{{ direccion.postal_code || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">País</label>
+                  <p>{{ direccion.country || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Tipo</label>
+                  <p>{{ direccion.type || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información Bancaria -->
+        <div *ngIf="selectedUser.informacion_bancaria" class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información Bancaria</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Tipo de Tarjeta</label>
+              <p class="text-sm">{{ selectedUser.informacion_bancaria.card_type || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Número de Tarjeta</label>
+              <p class="text-sm">{{ selectedUser.informacion_bancaria.card_number || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Fecha de Expiración</label>
+              <p class="text-sm">{{ selectedUser.informacion_bancaria.card_expire || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Moneda</label>
+              <p class="text-sm">{{ selectedUser.informacion_bancaria.currency || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">IBAN</label>
+              <p class="text-sm">{{ selectedUser.informacion_bancaria.iban || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Información de Compañía -->
+        <div *ngIf="selectedUser.informacion_compania" class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Información de Compañía</h3>
+          <div class="space-y-2">
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Nombre de la Compañía</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.company_name || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Departamento</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.department || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Título</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.title || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Dirección</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.address_line || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Ciudad</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.city || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Estado</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.state || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">Código Postal</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.postal_code || 'N/A' }}</p>
+            </div>
+            <div>
+              <label class="text-sm font-medium text-muted-foreground">País</label>
+              <p class="text-sm">{{ selectedUser.informacion_compania.country || 'N/A' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Criptomonedas -->
+        <div *ngIf="selectedUser.criptomonedas && selectedUser.criptomonedas.length > 0" class="space-y-3">
+          <h3 class="text-lg font-semibold text-green-400 border-b border-green-400 pb-1">Criptomonedas</h3>
+          <div class="space-y-3">
+            <div *ngFor="let crypto of selectedUser.criptomonedas; let i = index" class="border-l-4 border-green-400 pl-3 bg-muted/20 rounded-r">
+              <h4 class="font-medium text-sm mb-2 text-green-400">Criptomoneda {{ i + 1 }}</h4>
+              <div class="space-y-1 text-sm">
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Moneda</label>
+                  <p>{{ crypto.coin || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Wallet</label>
+                  <p class="break-all">{{ crypto.wallet || 'N/A' }}</p>
+                </div>
+                <div>
+                  <label class="text-xs font-medium text-muted-foreground">Red</label>
+                  <p>{{ crypto.network || 'N/A' }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button
+        (click)="closeDetails()"
+        class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md text-sm font-medium transition-colors"
+      >
+        Cerrar
+      </button>
     </div>
   </div>
 </div>
