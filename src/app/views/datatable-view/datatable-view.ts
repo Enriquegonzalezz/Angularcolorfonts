@@ -12,7 +12,7 @@ interface User {
   username: string;
   email: string;
   admin: number; // 0 = Usuario, 1 = Admin
-  estado: string; // 'F' = Habilitado, 'V' = Deshabilitado
+  estado: string; // 'V' = Habilitado, 'F' = Deshabilitado
   first_name?: string; // Opcional porque puede ser null
 }
 
@@ -256,7 +256,7 @@ export class DatatableView implements OnInit {
 
     // Estadísticas del reporte
     const totalUsers = this.filteredUsers.length;
-    const activeUsers = this.filteredUsers.filter(u => u.estado === 'F').length;
+    const activeUsers = this.filteredUsers.filter(u => u.estado === 'V').length;
     const adminUsers = this.filteredUsers.filter(u => u.admin === 1).length;
 
     doc.text(`Total de usuarios: ${totalUsers} | Activos: ${activeUsers} `, 
@@ -268,7 +268,7 @@ export class DatatableView implements OnInit {
       user.username,
       user.email,
       user.admin === 1 ? 'Admin' : 'Usuario',
-      user.estado === 'F' ? 'Habilitado' : 'Deshabilitado',
+      user.estado === 'V' ? 'Habilitado' : 'Deshabilitado',
       user.first_name || 'N/A'
     ]);
 
@@ -333,7 +333,7 @@ export class DatatableView implements OnInit {
       Usuario: user.username,
       Email: user.email,
       Rol: user.admin === 1 ? 'Admin' : 'Usuario',
-      Estado: user.estado === 'F' ? 'Habilitado' : 'Deshabilitado',
+      Estado: user.estado === 'V' ? 'Habilitado' : 'Deshabilitado',
       'Primer Nombre': user.first_name
     })));
 
@@ -370,7 +370,7 @@ export class DatatableView implements OnInit {
     console.log('toggleUserStatus llamado para usuario:', user);
     console.log('Estado actual:', user.estado);
     
-    const newEstado = user.estado === 'F' ? 'V' : 'F';
+    const newEstado = user.estado === 'V' ? 'F' : 'V';
     console.log('Nuevo estado a enviar:', newEstado);
     
     const token = localStorage.getItem('access_token');
@@ -416,7 +416,7 @@ export class DatatableView implements OnInit {
   }
 
   isUserActive(user: User): boolean {
-    return user.estado === 'F';
+    return user.estado === 'V';
   }
 
   getUserStatusText(user: User): string {

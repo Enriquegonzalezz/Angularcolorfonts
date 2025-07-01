@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { StyleService, Sizes } from '../../services/style.service';
+import { AuthService } from '../../services/auth.service';
 
 interface RouteProps {
   href: string;
@@ -19,6 +20,7 @@ interface RouteProps {
 export class NavbarComponent implements OnInit, OnDestroy {
   isOpen = false;
   isLoggedIn = false;
+  isAdmin = false;
   colors: string[] = [];
   fonts: string[] = [];
   sizes: Sizes = { title: 48, subtitle: 32, paragraph: 18 };
@@ -46,11 +48,13 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
   constructor(
     private router: Router,
-    private styleService: StyleService
+    private styleService: StyleService,
+    private authService: AuthService
   ) {}
 
   ngOnInit() {
-    this.isLoggedIn = !!localStorage.getItem("access_token");
+    this.isLoggedIn = this.authService.isAuthenticated();
+    this.isAdmin = this.authService.isAdmin();
     this.subscribeToStyles();
   }
 
@@ -82,8 +86,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
   }
 
   handleLogout() {
-    localStorage.removeItem("access_token");
+    this.authService.logout();
     this.isLoggedIn = false;
+    this.isAdmin = false;
     this.router.navigate(['/']);
     window.location.reload();
   }

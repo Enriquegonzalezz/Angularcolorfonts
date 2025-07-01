@@ -99,7 +99,7 @@
         Formulario
       </a>
       <a
-        *ngIf="isLoggedIn"
+        *ngIf="isLoggedIn && isAdmin"
         href="/usuarios"
         class="nav-link"
         [style.color]="colors[0]"

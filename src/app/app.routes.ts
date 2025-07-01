@@ -6,6 +6,7 @@ import { ColorViewComponent } from './views/color-view/color-view';
 import { FontsViewComponent } from './views/fonts-view/fonts-view';
 import { FormularioView } from './views/formulario-view/formulario-view';
 import { DatatableView } from './views/datatable-view/datatable-view';
+import { AdminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -15,6 +16,6 @@ export const routes: Routes = [
   { path: 'colors', component: ColorViewComponent },
   { path: 'fonts', component: FontsViewComponent },
   { path: 'formulario', component: FormularioView },
-  { path: 'usuarios', component: DatatableView },
+  { path: 'usuarios', component: DatatableView, canActivate: [AdminGuard] },
   { path: '**', redirectTo: '' }
 ];

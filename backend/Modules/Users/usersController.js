@@ -5,17 +5,49 @@ const { SECRET_JWT_KEY } = require("../../config");
 const { ca } = require("zod/v4/locales");
 
 class UsersController {
-    getUserInfo = async (req, res) => {
-        console.log("controlador getUserInfo")
+    updateUser = async (req, res) => {
+        console.log("controlador updateUser")
         const isAuthenticated = await this.auth(req);
         if (!isAuthenticated.valid) {
             return res.status(401).json({ message: "El usuario no está autorizado." });
         }
         const { id } = req.params;
+        const userData = req.body; // Ahora recibimos directamente los datos del formulario
+        
         try {
+            const result = await UsersModel.updateUser(id, userData);
+            return res.json({
+                message: "Usuario actualizado exitosamente",
+                user: result
+            });
+        } catch (error) {
+            console.error("Error en updateUser:", error);
+            return res.status(500).json({ error: error.message });
+        }
+    }
+    
+    getUserInfo = async (req, res) => {
+        console.log("🔍 controlador getUserInfo iniciado");
+        console.log("📋 Parámetros recibidos:", req.params);
+        
+        const isAuthenticated = await this.auth(req);
+        console.log("🔐 Resultado de autenticación:", isAuthenticated);
+        
+        if (!isAuthenticated.valid) {
+            console.log("❌ Usuario no autorizado");
+            return res.status(401).json({ message: "El usuario no está autorizado." });
+        }
+        
+        const { id } = req.params;
+        console.log("🆔 ID del usuario a consultar:", id);
+        
+        try {
+            console.log("📞 Llamando a UsersModel.getUserInfo...");
             const result = await UsersModel.getUserInfo(id);
+            console.log("✅ Resultado obtenido:", result);
             return res.json(result);
         } catch (error) {
+            console.error("❌ Error en getUserInfo:", error);
             return res.status(500).json({ error: error.message });
         }
     }
@@ -89,10 +121,17 @@ class UsersController {
             const response = await UsersModel.login({ usuario })
             return res.status(200).json({
                 message: `El usuario ${response.email} ha iniciado sesión exitosamente`,
-                token: response.token
+                token: response.token,
+                admin: response.admin
             })
         } catch (error) {
-            console.log(error)
+            console.log("❌ Error en login:", error.message)
+            
+            // Verificar si es un error de usuario inhabilitado
+            if (error.message.includes('inhabilitada')) {
+                return res.status(403).json({ error: error.message });
+            }
+            
             return res.status(500).json({ error: 'Error al iniciar sesión' });
         }
     }

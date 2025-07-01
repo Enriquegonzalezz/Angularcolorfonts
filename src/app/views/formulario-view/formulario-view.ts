@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient, HttpHeaders, HttpClientModule } from '@angular/common/http';
 import * as L from 'leaflet';
 
 interface UserData {
@@ -78,7 +79,7 @@ interface UserData {
 @Component({
   selector: 'app-formulario-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, HttpClientModule],
   templateUrl: './formulario-view.html',
   styleUrl: './formulario-view.css'
 })
@@ -90,6 +91,8 @@ export class FormularioView implements OnInit, OnDestroy {
   totalSteps = 6;
   map: L.Map | null = null;
   marker: L.Marker | null = null;
+  companyMap: L.Map | null = null;
+  companyMarker: L.Marker | null = null;
 
   // Definir los pasos del wizard
   steps = [
@@ -97,7 +100,7 @@ export class FormularioView implements OnInit, OnDestroy {
       id: 1,
       title: 'Información Personal',
       description: 'Datos básicos del usuario',
-      fields: ['firstName', 'lastName', 'maidenName', 'age', 'gender', 'email', 'phone', 'username', 'password', 'birthDate']
+      fields: ['firstName', 'lastName', 'maidenName', 'age', 'gender', 'email', 'phone', 'username', 'birthDate']
     },
     {
       id: 2,
@@ -133,31 +136,30 @@ export class FormularioView implements OnInit, OnDestroy {
 
   // Opciones para los selectores
   bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
-  eyeColors = ['Brown', 'Blue', 'Green', 'Hazel', 'Gray', 'Amber'];
-  hairColors = ['Black', 'Brown', 'Blonde', 'Red', 'Gray', 'White'];
-  hairTypes = ['Straight', 'Wavy', 'Curly', 'Coily'];
+  eyeColors = ['Marrón', 'Azul', 'Verde', 'Avellana', 'Gris', 'Ámbar'];
+  hairColors = ['Negro', 'Marrón', 'Rubio', 'Rojo', 'Gris', 'Blanco'];
+  hairTypes = ['Liso', 'Ondulado', 'Rizado', 'Enrulado'];
   cardTypes = ['Visa', 'Mastercard', 'American Express', 'Discover', 'Elo'];
   currencies = ['USD', 'EUR', 'GBP', 'JPY', 'CNY', 'CAD', 'AUD'];
-  departments = ['Engineering', 'Sales', 'Marketing', 'HR', 'Finance', 'IT', 'Operations'];
-  roles = ['admin', 'user', 'moderator', 'editor'];
+  departments = ['Ingeniería', 'Ventas', 'Marketing', 'Recursos Humanos', 'Finanzas', 'TI', 'Operaciones'];
+  roles = ['administrador', 'usuario', 'moderador', 'editor'];
   cryptoCoins = ['Bitcoin', 'Ethereum', 'Cardano', 'Solana', 'Polkadot'];
   cryptoNetworks = ['Ethereum (ERC20)', 'Bitcoin', 'Binance Smart Chain', 'Polygon'];
 
   // Hacer Math disponible en el template
   Math = Math;
 
-  constructor(private fb: FormBuilder, private router: Router) {
+  constructor(private fb: FormBuilder, private router: Router, private http: HttpClient) {
     this.form = this.fb.group({
       // Información Personal
       firstName: ['', [Validators.required, Validators.minLength(2)]],
       lastName: ['', [Validators.required, Validators.minLength(2)]],
       maidenName: [''],
-      age: ['', [Validators.required, Validators.min(1), Validators.max(120)]],
+      age: [0, [Validators.required, Validators.min(1), Validators.max(120)]],
       gender: ['', Validators.required],
       email: ['', [Validators.required, Validators.email]],
       phone: ['', [Validators.required, Validators.pattern(/^\+?[\d\s-()]+$/)]],
       username: ['', [Validators.required, Validators.minLength(3)]],
-      password: ['', [Validators.required, Validators.minLength(6)]],
       birthDate: ['', Validators.required],
 
       // Características Físicas
@@ -226,16 +228,49 @@ export class FormularioView implements OnInit, OnDestroy {
       }),
       role: ['', Validators.required]
     });
+
+    // Suscribirse a cambios en birthDate para calcular edad automáticamente
+    this.form.get('birthDate')?.valueChanges.subscribe(birthDate => {
+      if (birthDate) {
+        const age = this.calculateAge(birthDate);
+        this.form.patchValue({ age }, { emitEvent: false });
+      }
+    });
   }
 
   ngOnInit() {
+    // Configurar iconos de Leaflet para evitar errores 404
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEM1LjU5NiAwIDAgNS41OTYgMCAxMi41QzAgMTkuNDA0IDUuNTk2IDI1IDEyLjUgMjVDMTkuNDA0IDI1IDI1IDE5LjQwNCAyNSAxMi41QzI1IDUuNTk2IDE5LjQwNCAwIDEyLjUgMFoiIGZpbGw9IiMyMjIiLz4KPHBhdGggZD0iTTEyLjUgNkM5LjQ2MiA2IDcgOC40NjIgNyAxMS41QzcgMTQuNTM4IDkuNDYyIDE3IDEyLjUgMTdDMTUuNTM4IDE3IDE4IDE0LjUzOCAxOCAxMS41QzE4IDguNDYyIDE1LjUzOCA2IDEyLjUgNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+      iconUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUiIGhlaWdodD0iNDEiIHZpZXdCb3g9IjAgMCAyNSA0MSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyLjUgMEM1LjU5NiAwIDAgNS41OTYgMCAxMi41QzAgMTkuNDA0IDUuNTk2IDI1IDEyLjUgMjVDMTkuNDA0IDI1IDI1IDE5LjQwNCAyNSAxMi41QzI1IDUuNTk2IDE5LjQwNCAwIDEyLjUgMFoiIGZpbGw9IiMyMjIiLz4KPHBhdGggZD0iTTEyLjUgNkM5LjQ2MiA2IDcgOC40NjIgNyAxMS41QzcgMTQuNTM4IDkuNDYyIDE3IDEyLjUgMTdDMTUuNTM4IDE3IDE4IDE0LjUzOCAxOCAxMS41QzE4IDguNDYyIDE1LjUzOCA2IDEyLjUgNloiIGZpbGw9IndoaXRlIi8+Cjwvc3ZnPgo=',
+      shadowUrl: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iMTUiIHZpZXdCb3g9IjAgMCA0MCAxNSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGVsbGlwc2UgY3g9IjIwIiBjeT0iMTIiIHJ4PSIxMiIgcnk9IjQiIGZpbGw9InJnYmEoMCwwLDAsMC4yKSIvPgo8L3N2Zz4K'
+    });
+    
     this.initializeMap();
+    this.loadUserData();
   }
 
   ngOnDestroy() {
     if (this.map) {
       this.map.remove();
     }
+    if (this.companyMap) {
+      this.companyMap.remove();
+    }
+  }
+
+  calculateAge(birthDate: string): number {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    
+    return age;
   }
 
   initializeMap() {
@@ -287,6 +322,42 @@ export class FormularioView implements OnInit, OnDestroy {
     }, 1000);
   }
 
+  initializeCompanyMap() {
+    setTimeout(() => {
+      const companyMapContainer = document.getElementById('company-map');
+      
+      if (companyMapContainer) {
+        try {
+          if (this.companyMap) {
+            this.companyMap.remove();
+          }
+
+          this.companyMap = L.map('company-map').setView([40.7128, -74.0060], 13);
+          
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+          }).addTo(this.companyMap);
+
+          this.companyMarker = L.marker([40.7128, -74.0060]).addTo(this.companyMap);
+
+          this.companyMap.on('click', (e: L.LeafletMouseEvent) => {
+            this.onCompanyMapClick(e);
+          });
+
+          setTimeout(() => {
+            if (this.companyMap) {
+              this.companyMap.invalidateSize();
+            }
+          }, 500);
+
+        } catch (error) {
+          console.error('Error initializing company map:', error);
+        }
+      }
+    }, 1000);
+  }
+
   onMapClick(e: L.LeafletMouseEvent) {
     const { lat, lng } = e.latlng;
 
@@ -304,6 +375,24 @@ export class FormularioView implements OnInit, OnDestroy {
 
     // Geocodificación inversa para obtener dirección
     this.reverseGeocode(lat, lng);
+  }
+
+  onCompanyMapClick(e: L.LeafletMouseEvent) {
+    const { lat, lng } = e.latlng;
+
+    if (this.companyMarker) {
+      this.companyMarker.setLatLng([lat, lng]);
+    }
+
+    this.form.patchValue({
+      company: {
+        address: {
+          coordinates: { lat, lng }
+        }
+      }
+    });
+
+    this.reverseGeocodeCompany(lat, lng);
   }
 
   async reverseGeocode(lat: number, lng: number) {
@@ -332,6 +421,34 @@ export class FormularioView implements OnInit, OnDestroy {
     }
   }
 
+  async reverseGeocodeCompany(lat: number, lng: number) {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+      );
+      const data = await response.json();
+
+      if (data.address) {
+        const address = data.address;
+        this.form.patchValue({
+          company: {
+            address: {
+              address: `${address.house_number || ''} ${address.road || ''}`.trim(),
+              city: address.city || address.town || address.village || '',
+              state: address.state || '',
+              stateCode: address.state_code || '',
+              postalCode: address.postcode || '',
+              country: address.country || '',
+              coordinates: { lat, lng }
+            }
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error en geocodificación de empresa:', error);
+    }
+  }
+
   get f() {
     return this.form.controls;
   }
@@ -348,42 +465,27 @@ export class FormularioView implements OnInit, OnDestroy {
     const step = this.steps.find(s => s.id === stepId);
     if (!step) return false;
 
-    console.log(`=== VALIDANDO PASO ${stepId} ===`);
-
     // Validar cada campo del paso
     for (const fieldName of step.fields) {
       const control = this.form.get(fieldName);
-      console.log(`Verificando campo: ${fieldName}`);
 
       if (control) {
         // Si es un FormGroup (como 'hair'), validar todos sus controles
         if (control instanceof FormGroup) {
-          console.log(`  ${fieldName} es un FormGroup, válido: ${control.valid}`);
           if (control.invalid) {
-            console.log(`  ❌ FormGroup inválido en paso ${stepId}:`, fieldName, control.errors);
-            Object.keys(control.controls).forEach(nestedField => {
-              const nestedControl = control.get(nestedField);
-              if (nestedControl && nestedControl.invalid) {
-                console.log(`    - ${nestedField}:`, nestedControl.errors);
-              }
-            });
             return false;
           }
         } else {
           // Si es un control simple
-          console.log(`  ${fieldName} es un control simple, válido: ${control.valid}, valor: "${control.value}"`);
           if (control.invalid) {
-            console.log(`  ❌ Campo inválido en paso ${stepId}:`, fieldName, control.errors);
             return false;
           }
         }
       } else {
-        console.log(`  ❌ Control no encontrado: ${fieldName}`);
         return false;
       }
     }
 
-    console.log(`✅ Paso ${stepId} es válido`);
     return true;
   }
 
@@ -404,41 +506,36 @@ export class FormularioView implements OnInit, OnDestroy {
   goToStep(stepId: number) {
     if (this.canGoToStep(stepId)) {
       this.currentStep = stepId;
-    }
-  }
-
-  nextStep() {
-    console.log('Intentando ir al siguiente paso...');
-    console.log('Paso actual:', this.currentStep);
-    console.log('¿Paso actual es válido?', this.isStepValid(this.currentStep));
-
-    // Log detallado para el paso 2
-    if (this.currentStep === 2) {
-      console.log('=== DEBUG PASO 2 ===');
-      console.log('Formulario completo válido:', this.form.valid);
-      console.log('Estado del FormGroup hair:', this.form.get('hair')?.valid);
-      console.log('hair.color válido:', this.form.get('hair.color')?.valid);
-      console.log('hair.type válido:', this.form.get('hair.type')?.valid);
-      console.log('bloodGroup válido:', this.form.get('bloodGroup')?.valid);
-      console.log('height válido:', this.form.get('height')?.valid);
-      console.log('weight válido:', this.form.get('weight')?.valid);
-      console.log('eyeColor válido:', this.form.get('eyeColor')?.valid);
-      console.log('===================');
-    }
-
-    if (this.isStepValid(this.currentStep) && this.currentStep < this.totalSteps) {
-      this.currentStep++;
-      console.log('Pasando al paso:', this.currentStep);
-
-      // Reinicializar mapa si llegamos al paso 3
+      
+      // Inicializar mapas según el paso
       if (this.currentStep === 3) {
         setTimeout(() => {
           this.initializeMap();
         }, 100);
+      } else if (this.currentStep === 4) {
+        setTimeout(() => {
+          this.initializeCompanyMap();
+        }, 100);
+      }
+    }
+  }
+
+  nextStep() {
+    if (this.isStepValid(this.currentStep) && this.currentStep < this.totalSteps) {
+      this.currentStep++;
+      
+      // Inicializar mapas según el paso
+      if (this.currentStep === 3) {
+        setTimeout(() => {
+          this.initializeMap();
+        }, 100);
+      } else if (this.currentStep === 4) {
+        setTimeout(() => {
+          this.initializeCompanyMap();
+        }, 100);
       }
     } else {
-      console.log('No se puede avanzar. Errores en el paso actual:');
-      this.showStepValidationErrors(this.currentStep);
+      this.markStepFieldsAsTouched(this.currentStep);
     }
   }
 
@@ -448,27 +545,22 @@ export class FormularioView implements OnInit, OnDestroy {
     }
   }
 
-  showStepValidationErrors(stepId: number) {
+  markStepFieldsAsTouched(stepId: number) {
     const step = this.steps.find(s => s.id === stepId);
     if (!step) return;
 
-    console.log(`Errores en el paso ${stepId}:`);
     step.fields.forEach(fieldName => {
       const control = this.form.get(fieldName);
       if (control) {
         if (control instanceof FormGroup) {
-          // Para FormGroups, mostrar errores de todos los controles anidados
           Object.keys(control.controls).forEach(nestedField => {
             const nestedControl = control.get(nestedField);
-            if (nestedControl && nestedControl.invalid) {
-              console.log(`- ${fieldName}.${nestedField}:`, nestedControl.errors);
+            if (nestedControl) {
+              nestedControl.markAsTouched();
             }
           });
         } else {
-          // Para controles simples
-          if (control.invalid) {
-            console.log(`- ${fieldName}:`, control.errors);
-          }
+          control.markAsTouched();
         }
       }
     });
@@ -476,13 +568,13 @@ export class FormularioView implements OnInit, OnDestroy {
 
   onSubmit() {
     this.submitted = true;
+    this.markAllFieldsAsTouched();
 
     if (this.form.valid) {
       this.isSubmitting = true;
 
       // Generar el JSON con el formato requerido
-      const userData: UserData = {
-        id: Math.floor(Math.random() * 1000) + 1, // ID aleatorio
+      const userData = {
         ...this.form.value,
         ip: this.generateRandomIP(),
         userAgent: this.form.value.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.93 Safari/537.36'
@@ -490,17 +582,114 @@ export class FormularioView implements OnInit, OnDestroy {
 
       console.log('JSON generado:', userData);
 
-      // Simular envío
-      setTimeout(() => {
+      // Obtener el token del localStorage
+      const token = localStorage.getItem('access_token');
+      
+      if (!token) {
+        console.log('⚠️ No hay token - Modo de prueba');
+        console.log('📝 Mostrando datos que se enviarían al backend:');
+        console.log(userData);
+        
+        // Simular envío exitoso en modo de prueba
+        setTimeout(() => {
+          this.isSubmitting = false;
+          this.submitted = false;
+          alert('¡Formulario enviado exitosamente! (Modo de prueba - No se guardó en el backend)');
+        }, 2000);
+        return;
+      }
+
+      const headers = new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      });
+
+      // Obtener el ID del usuario del token o localStorage
+      const userId = this.getUserIdFromToken(token);
+
+      if (!userId) {
+        alert('Error: No se pudo obtener el ID del usuario');
         this.isSubmitting = false;
-        this.submitted = false;
-        this.form.reset();
-        this.currentStep = 1;
-        alert('¡Formulario enviado exitosamente!');
-      }, 2000);
+        return;
+      }
+
+      // Enviar datos al backend
+      this.http.patch(`http://localhost:3000/updateUserInfo/${userId}`, userData, { headers })
+        .subscribe({
+          next: (response: any) => {
+            console.log('Respuesta del servidor:', response);
+            this.isSubmitting = false;
+            this.submitted = false;
+            this.form.reset();
+            this.currentStep = 1;
+            alert('¡Formulario enviado exitosamente!');
+          },
+          error: (error) => {
+            console.error('Error al enviar datos:', error);
+            this.isSubmitting = false;
+            alert(`Error al enviar el formulario: ${error.error?.error || error.message}`);
+          }
+        });
     } else {
       this.currentStep = 1;
     }
+  }
+
+  getUserIdFromToken(token: string | null): number | null {
+    if (!token) {
+      console.log('❌ Token es null o undefined');
+      return null;
+    }
+    
+    try {
+      console.log('🔐 Decodificando token...');
+      const parts = token.split('.');
+      if (parts.length !== 3) {
+        console.log('❌ Token no tiene el formato correcto (3 partes)');
+        return null;
+      }
+      
+      const payload = JSON.parse(atob(parts[1]));
+      console.log('📋 Payload del token:', payload);
+      
+      if (!payload.id) {
+        console.log('❌ No se encontró ID en el payload del token');
+        return null;
+      }
+      
+      console.log('✅ ID extraído del token:', payload.id);
+      return payload.id;
+    } catch (error) {
+      console.error('❌ Error al decodificar el token:', error);
+      return null;
+    }
+  }
+
+  markAllFieldsAsTouched() {
+    Object.keys(this.form.controls).forEach(key => {
+      const control = this.form.get(key);
+      if (control) {
+        if (control instanceof FormGroup) {
+          Object.keys(control.controls).forEach(nestedKey => {
+            const nestedControl = control.get(nestedKey);
+            if (nestedControl) {
+              if (nestedControl instanceof FormGroup) {
+                Object.keys(nestedControl.controls).forEach(deepKey => {
+                  const deepControl = nestedControl.get(deepKey);
+                  if (deepControl) {
+                    deepControl.markAsTouched();
+                  }
+                });
+              } else {
+                nestedControl.markAsTouched();
+              }
+            }
+          });
+        } else {
+          control.markAsTouched();
+        }
+      }
+    });
   }
 
   onReset() {
@@ -516,7 +705,7 @@ export class FormularioView implements OnInit, OnDestroy {
 
   getErrorMessage(controlName: string): string {
     const control = this.form.get(controlName);
-    if (control?.errors && this.submitted) {
+    if (control?.errors && (control.touched || this.submitted)) {
       if (control.errors['required']) {
         return 'Este campo es requerido';
       }
@@ -543,7 +732,7 @@ export class FormularioView implements OnInit, OnDestroy {
           return 'Formato: MM/YY';
         }
         if (controlName === 'cardNumber') {
-          return 'Debe tener 16 dígitos';
+          return 'Debe tener entre 13 y 19 dígitos';
         }
         if (controlName === 'iban') {
           return 'Formato IBAN inválido';
@@ -555,8 +744,8 @@ export class FormularioView implements OnInit, OnDestroy {
 
   getFieldClass(controlName: string): string {
     const control = this.form.get(controlName);
-    const isInvalid = control?.invalid && this.submitted;
-    const isValid = control?.valid && this.submitted;
+    const isInvalid = control?.invalid && (control.touched || this.submitted);
+    const isValid = control?.valid && (control.touched || this.submitted);
 
     if (isInvalid) {
       return 'border-red-500 focus:ring-red-500';
@@ -571,47 +760,6 @@ export class FormularioView implements OnInit, OnDestroy {
     if (stepId < this.currentStep) return 'completed';
     if (stepId === this.currentStep) return 'current';
     return 'upcoming';
-  }
-
-  // Función temporal para debug
-  debugStep2() {
-    console.log('=== DEBUG COMPLETO PASO 2 ===');
-    console.log('Formulario completo:', this.form.value);
-    console.log('Formulario válido:', this.form.valid);
-
-    const step2Fields = ['bloodGroup', 'height', 'weight', 'eyeColor', 'hair'];
-    step2Fields.forEach(field => {
-      const control = this.form.get(field);
-      console.log(`${field}:`, {
-        value: control?.value,
-        valid: control?.valid,
-        errors: control?.errors,
-        touched: control?.touched,
-        dirty: control?.dirty
-      });
-    });
-
-    // Verificar FormGroup hair específicamente
-    const hairGroup = this.form.get('hair');
-    if (hairGroup && hairGroup instanceof FormGroup) {
-      console.log('Hair group:', {
-        valid: hairGroup.valid,
-        value: hairGroup.value,
-        errors: hairGroup.errors
-      });
-
-      Object.keys(hairGroup.controls).forEach(key => {
-        const control = hairGroup.get(key);
-        console.log(`  hair.${key}:`, {
-          value: control?.value,
-          valid: control?.valid,
-          errors: control?.errors
-        });
-      });
-    }
-
-    console.log('¿Paso 2 es válido?', this.isStepValid(2));
-    console.log('========================');
   }
 
   // Función temporal para llenar dirección de ejemplo
@@ -649,5 +797,333 @@ export class FormularioView implements OnInit, OnDestroy {
 
   goToHome() {
     this.router.navigate(['/']);
+  }
+
+  loadUserData() {
+    console.log('🔍 Iniciando carga de datos del usuario...');
+    const token = localStorage.getItem('access_token');
+    console.log('Token encontrado:', token ? 'Sí' : 'No');
+    
+    if (!token) {
+      console.log('❌ No hay token, usuario no autenticado');
+      console.log('💡 Sugerencia: Asegúrate de estar logueado en la aplicación');
+      return;
+    }
+
+    const userId = this.getUserIdFromToken(token);
+    console.log('ID del usuario extraído del token:', userId);
+    
+    if (!userId) {
+      console.log('❌ No se pudo obtener el ID del usuario');
+      console.log('💡 Sugerencia: El token podría estar corrupto o expirado');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+
+    const url = `http://localhost:3000/userInfo/${userId}`;
+    console.log('🌐 Haciendo petición a:', url);
+    console.log('📋 Headers enviados:', headers);
+
+    this.http.get(url, { headers })
+      .subscribe({
+        next: (userData: any) => {
+          console.log('✅ Datos del usuario cargados exitosamente');
+          console.log('📊 Estructura de datos recibida:', {
+            hasUserData: !!userData,
+            userFields: userData ? Object.keys(userData) : [],
+            hasCabellos: !!userData?.Cabellos,
+            hasDirecciones: !!userData?.Direcciones,
+            hasInformacionBancaria: !!userData?.InformacionBancaria,
+            hasInformacionCompania: !!userData?.InformacionCompania,
+            hasCriptomonedas: !!userData?.Criptomonedas
+          });
+          
+          if (!userData) {
+            console.log('⚠️ No se recibieron datos del usuario');
+            return;
+          }
+          
+          this.populateFormWithUserData(userData);
+        },
+        error: (error) => {
+          console.error('❌ Error al cargar datos del usuario');
+          console.error('Status:', error.status);
+          console.error('Status Text:', error.statusText);
+          console.error('Message:', error.message);
+          
+          if (error.status === 401) {
+            console.log('🔐 Error 401: Usuario no autorizado');
+            console.log('💡 Sugerencia: El token podría estar expirado o ser inválido');
+          } else if (error.status === 404) {
+            console.log('🔍 Error 404: Usuario no encontrado');
+            console.log('💡 Sugerencia: El ID del usuario no existe en la base de datos');
+          } else if (error.status === 0) {
+            console.log('🌐 Error de conexión: No se puede conectar al servidor');
+            console.log('💡 Sugerencia: Verifica que el backend esté ejecutándose en http://localhost:3000');
+          }
+          
+          console.error('Error completo:', error);
+        }
+      });
+  }
+
+  populateFormWithUserData(userData: any) {
+    console.log('🔄 Iniciando mapeo de datos del usuario...');
+    console.log('Datos recibidos del backend:', userData);
+    
+    // Verificar si hay datos básicos del usuario
+    if (!userData || !userData.id) {
+      console.log('❌ No hay datos válidos del usuario para mapear');
+      return;
+    }
+    
+    // Mapear los datos del backend al formulario
+    const formData = {
+      // Datos básicos del usuario
+      firstName: userData.first_name || '',
+      lastName: userData.last_name || '',
+      maidenName: userData.maiden_name || '',
+      age: userData.age || 0,
+      gender: userData.gender || '',
+      email: userData.email || '',
+      phone: userData.phone || '',
+      username: userData.username || '',
+      birthDate: userData.birth_date || '',
+      image: userData.image_url || '',
+      bloodGroup: userData.blood_group || '',
+      height: userData.height_cm || '',
+      weight: userData.weight_kg || '',
+      eyeColor: userData.eye_color || '',
+      macAddress: userData.mac_address || '',
+      university: userData.university || '',
+      ein: userData.ein || '',
+      ssn: userData.ssn || '',
+      userAgent: userData.user_agent || '',
+      role: userData.admin === 1 ? 'administrador' : 'usuario',
+
+      // Información del cabello
+      hair: userData.Cabellos ? {
+        color: userData.Cabellos.color || '',
+        type: userData.Cabellos.type || ''
+      } : { color: '', type: '' },
+
+      // Dirección personal (buscar la dirección de tipo 'personal')
+      address: (() => {
+        if (!userData.Direcciones || !Array.isArray(userData.Direcciones)) {
+          console.log('📍 No hay direcciones o no es un array');
+          return {
+            address: '', city: '', state: '', stateCode: '', postalCode: '', country: '',
+            coordinates: { lat: 0, lng: 0 }
+          };
+        }
+        const personalAddress = userData.Direcciones.find((d: any) => d.type === 'personal');
+        if (!personalAddress) {
+          console.log('📍 No se encontró dirección personal');
+          return {
+            address: '', city: '', state: '', stateCode: '', postalCode: '', country: '',
+            coordinates: { lat: 0, lng: 0 }
+          };
+        }
+        console.log('📍 Dirección personal encontrada:', personalAddress);
+        return {
+          address: personalAddress.address_line || '',
+          city: personalAddress.city || '',
+          state: personalAddress.state || '',
+          stateCode: personalAddress.state_code || '',
+          postalCode: personalAddress.postal_code || '',
+          country: personalAddress.country || '',
+          coordinates: {
+            lat: personalAddress.latitude || 0,
+            lng: personalAddress.longitude || 0
+          }
+        };
+      })(),
+
+      // Información bancaria
+      bank: userData.InformacionBancaria ? {
+        cardExpire: userData.InformacionBancaria.card_expire || '',
+        cardNumber: userData.InformacionBancaria.card_number || '',
+        cardType: userData.InformacionBancaria.card_type || '',
+        currency: userData.InformacionBancaria.currency || '',
+        iban: userData.InformacionBancaria.iban || ''
+      } : {
+        cardExpire: '', cardNumber: '', cardType: '', currency: '', iban: ''
+      },
+
+      // Información de la empresa
+      company: userData.InformacionCompania ? {
+        department: userData.InformacionCompania.department || '',
+        name: userData.InformacionCompania.company_name || '',
+        title: userData.InformacionCompania.title || '',
+        address: {
+          address: userData.InformacionCompania.address_line || '',
+          city: userData.InformacionCompania.city || '',
+          state: userData.InformacionCompania.state || '',
+          stateCode: userData.InformacionCompania.state_code || '',
+          postalCode: userData.InformacionCompania.postal_code || '',
+          country: userData.InformacionCompania.country || '',
+          coordinates: {
+            lat: userData.InformacionCompania.latitude || 0,
+            lng: userData.InformacionCompania.longitude || 0
+          }
+        }
+      } : {
+        department: '', name: '', title: '',
+        address: {
+          address: '', city: '', state: '', stateCode: '', postalCode: '', country: '',
+          coordinates: { lat: 0, lng: 0 }
+        }
+      },
+
+      // Información de criptomonedas
+      crypto: userData.Criptomonedas ? {
+        coin: userData.Criptomonedas.coin || '',
+        wallet: userData.Criptomonedas.wallet || '',
+        network: userData.Criptomonedas.network || ''
+      } : {
+        coin: '', wallet: '', network: ''
+      }
+    };
+
+    console.log('📝 Datos mapeados para el formulario:', formData);
+
+    // Llenar el formulario con los datos
+    this.form.patchValue(formData);
+    console.log('✅ Formulario actualizado con los datos del usuario');
+    
+    // Mostrar resumen de datos cargados
+    const datosCargados = Object.entries(formData).filter(([key, value]) => {
+      if (typeof value === 'object' && value !== null) {
+        return Object.values(value).some(v => v && v !== '');
+      }
+      return value && value !== '';
+    });
+    
+    console.log('📊 Resumen de datos cargados:', datosCargados.map(([key]) => key));
+  }
+
+  // Método temporal para probar la carga de datos
+  testLoadUserData() {
+    console.log('🧪 Iniciando prueba de carga de datos...');
+    this.loadUserData();
+  }
+
+  // Método para probar conexión básica con el backend
+  testBackendConnection() {
+    console.log('🔌 Probando conexión básica con el backend...');
+    
+    // Probar endpoint de autenticación
+    this.http.get('http://localhost:3000/auth')
+      .subscribe({
+        next: (response: any) => {
+          console.log('✅ Conexión exitosa con /auth:', response);
+        },
+        error: (error) => {
+          console.error('❌ Error en /auth:', error);
+        }
+      });
+  }
+
+  // Método para mostrar información del token
+  showTokenInfo() {
+    const token = localStorage.getItem('access_token');
+    console.log('🔐 Información del token:');
+    console.log('Token existe:', !!token);
+    
+    if (token) {
+      console.log('Token completo:', token);
+      const userId = this.getUserIdFromToken(token);
+      console.log('ID extraído:', userId);
+    } else {
+      console.log('💡 No hay token - Usuario no logueado');
+      console.log('💡 Para probar el formulario, puedes:');
+      console.log('   1. Hacer login en la aplicación');
+      console.log('   2. Usar el modo de prueba con datos de ejemplo');
+    }
+  }
+
+  // Método para cargar datos de ejemplo (modo de prueba)
+  loadSampleData() {
+    console.log('🧪 Cargando datos de ejemplo para modo de prueba...');
+    
+    const sampleData = {
+      firstName: 'Juan',
+      lastName: 'Pérez',
+      maidenName: '',
+      age: 28,
+      gender: 'masculino',
+      email: 'juan.perez@ejemplo.com',
+      phone: '+1 (555) 123-4567',
+      username: 'juanperez',
+      birthDate: '1995-06-15',
+      image: 'https://ejemplo.com/foto.jpg',
+      bloodGroup: 'A+',
+      height: 175,
+      weight: 70,
+      eyeColor: 'Marrón',
+      macAddress: '00:1B:44:11:3A:B7',
+      university: 'Universidad Nacional',
+      ein: '12-3456789',
+      ssn: '123-45-6789',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      role: 'usuario',
+
+      hair: {
+        color: 'Negro',
+        type: 'Liso'
+      },
+
+      address: {
+        address: '123 Calle Principal',
+        city: 'Ciudad de México',
+        state: 'Distrito Federal',
+        stateCode: 'CDMX',
+        postalCode: '12345',
+        country: 'México',
+        coordinates: {
+          lat: 19.4326,
+          lng: -99.1332
+        }
+      },
+
+      bank: {
+        cardExpire: '12/25',
+        cardNumber: '1234567890123456',
+        cardType: 'Visa',
+        currency: 'USD',
+        iban: 'ES9121000418450200051332'
+      },
+
+      company: {
+        department: 'Ingeniería',
+        name: 'Tech Solutions S.A.',
+        title: 'Desarrollador Senior',
+        address: {
+          address: '456 Avenida Empresarial',
+          city: 'Guadalajara',
+          state: 'Jalisco',
+          stateCode: 'JAL',
+          postalCode: '54321',
+          country: 'México',
+          coordinates: {
+            lat: 20.6597,
+            lng: -103.3496
+          }
+        }
+      },
+
+      crypto: {
+        coin: 'Bitcoin',
+        wallet: '0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6',
+        network: 'Ethereum (ERC20)'
+      }
+    };
+
+    console.log('📝 Datos de ejemplo cargados:', sampleData);
+    this.form.patchValue(sampleData);
+    console.log('✅ Formulario actualizado con datos de ejemplo');
   }
 }

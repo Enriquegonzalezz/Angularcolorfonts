@@ -11,6 +11,7 @@ const createUsersRouter = () => {
     usersRouter.get('/usersInfo', usersController.getUsersInfo);
     usersRouter.get('/userInfo/:id', usersController.getUserInfo);
     usersRouter.patch('/cambiarEstado/:id', usersController.cambiarEstado);
+    usersRouter.patch('/updateUserInfo/:id', usersController.updateUser);
 
     return usersRouter;
 }

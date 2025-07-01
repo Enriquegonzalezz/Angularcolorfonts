@@ -12,7 +12,7 @@ Usuarios.init({
   last_name:     { type: DataTypes.STRING(100) },
   maiden_name:   { type: DataTypes.STRING(100) },
   age:           { type: DataTypes.INTEGER },
-  gender:        { type: DataTypes.ENUM('male','female','other') },
+  gender:        { type: DataTypes.ENUM('masculino','femenino','otro') },
   phone:         { type: DataTypes.STRING(50) },
   birth_date:    { type: DataTypes.DATE },
   image_url:     { type: DataTypes.STRING(255) },
@@ -26,7 +26,7 @@ Usuarios.init({
   ein:           { type: DataTypes.STRING(20) },
   ssn:           { type: DataTypes.STRING(20) },
   user_agent:    { type: DataTypes.TEXT },
-  estado:        { type: DataTypes.STRING(5), defaultValue: 'F' }
+  estado:        { type: DataTypes.STRING(5), defaultValue: 'V' } // 'V' = Habilitado, 'F' = Deshabilitado
 }, {
   sequelize,
   timestamps: false,
