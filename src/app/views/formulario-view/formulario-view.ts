@@ -906,8 +906,8 @@ export class FormularioView implements OnInit, OnDestroy {
 
       // Información del cabello
       hair: userData.Cabellos ? {
-        color: userData.Cabellos.color || '',
-        type: userData.Cabellos.type || ''
+        color: userData.Cabellos.color || userData.Cabellos.hair_color || '',
+        type: userData.Cabellos.type || userData.Cabellos.hair_type || ''
       } : { color: '', type: '' },
 
       // Dirección personal (buscar la dirección de tipo 'personal')
