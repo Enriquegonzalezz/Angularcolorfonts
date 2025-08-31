@@ -7,6 +7,9 @@ import { FontsViewComponent } from './views/fonts-view/fonts-view';
 import { FormularioView } from './views/formulario-view/formulario-view';
 import { DatatableView } from './views/datatable-view/datatable-view';
 import { AdminGuard } from './guards/admin.guard';
+import { ImageUpload } from './modules/image/image-upload/image-upload';
+import { VideoUpload } from './modules/video/video-upload/video-upload';
+import { MediaCarousel } from './modules/carousel/media-carousel/media-carousel';
 
 export const routes: Routes = [
   { path: '', component: HomeComponent },
@@ -17,5 +20,8 @@ export const routes: Routes = [
   { path: 'fonts', component: FontsViewComponent },
   { path: 'formulario', component: FormularioView },
   { path: 'usuarios', component: DatatableView, canActivate: [AdminGuard] },
+  { path: 'upload/image', component: ImageUpload },
+  { path: 'upload/video', component: VideoUpload },
+  { path: 'media', component: MediaCarousel },
   { path: '**', redirectTo: '' }
 ];

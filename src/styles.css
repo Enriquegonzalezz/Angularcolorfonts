@@ -1,6 +1,8 @@
 /* Leaflet Map Styles */
 @import 'leaflet/dist/leaflet.css';
 
+/* Eliminamos la importación de cropperjs que causa problemas */
+
 /* CSS Variables for theme */
 :root {
   --background: #ffffff;

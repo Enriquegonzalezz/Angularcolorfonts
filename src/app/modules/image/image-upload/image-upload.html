@@ -1,0 +1,51 @@
+<div class="image-upload-container">
+  @if (!imagePreview) {
+    <div class="upload-section">
+      <h2>Upload Image</h2>
+      <div class="upload-box">
+        <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileInput" class="file-input">
+        <label for="fileInput" class="file-label">
+          <span>Choose an image</span>
+        </label>
+      </div>
+    </div>
+  }
+
+  @if (imagePreview && !isCropping) {
+    <div class="preview-section">
+      <h2>Image Preview</h2>
+      <div class="image-preview">
+        <img [src]="imagePreview" alt="Preview">
+      </div>
+      
+      <div class="image-metadata">
+        <h3>Image Details</h3>
+        <ul>
+          <li><strong>Name:</strong> {{ imageName }}</li>
+          <li><strong>Size:</strong> {{ formatFileSize(imageSize) }}</li>
+          <li><strong>Dimensions:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
+        </ul>
+      </div>
+      
+      <div class="action-buttons">
+        <button (click)="startCropping()" class="btn btn-primary">Crop Image</button>
+        <button (click)="uploadImage()" class="btn btn-success">Upload Image</button>
+        <button (click)="imagePreview = null; imageFile = null;" class="btn btn-danger">Cancel</button>
+      </div>
+    </div>
+  }
+
+  @if (isCropping) {
+    <div class="cropping-section">
+      <h2>Crop Image</h2>
+      <div class="cropper-container">
+        <img #imageElement [src]="imagePreview" alt="Image to crop">
+      </div>
+      
+      <div class="action-buttons">
+        <button (click)="applyCrop()" class="btn btn-primary">Apply Crop</button>
+        <button (click)="cancelCrop()" class="btn btn-danger">Cancel</button>
+      </div>
+    </div>
+  }
+</div>

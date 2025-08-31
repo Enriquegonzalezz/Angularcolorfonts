@@ -1,11 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { NavbarComponent } from '../../components/navbar/navbar';
 import { HeroComponent } from '../../components/hero/hero';
 import { FooterComponent } from '../../components/footer/footer';
 import { FeaturesComponent } from '../../components/features/features';
 import { CardCarouselComponent } from '../../components/card-carousel/card-carousel.component';
+import { MediaCarousel } from '../../modules/carousel/media-carousel/media-carousel';
 import { StyleService, Sizes } from '../../services/style.service';
 
 @Component({
@@ -13,10 +15,12 @@ import { StyleService, Sizes } from '../../services/style.service';
   standalone: true,
   imports: [
     CommonModule, 
+    RouterLink,
     HeroComponent, 
     FooterComponent, 
     FeaturesComponent,
-    CardCarouselComponent
+    CardCarouselComponent,
+    MediaCarousel
   ],
   templateUrl: './home.html',
   styleUrl: './home.css'

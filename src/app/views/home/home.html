@@ -15,6 +15,25 @@
   </div>
 </section>
 
+<!-- Media Gallery Section -->
+<section class="media-section" [style.background]="colors[0]">
+  <div class="container">
+    <h2 class="section-title" 
+        [style.color]="colors[1]"
+        [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+        [style.font-size.px]="sizes.title">Media Gallery</h2>
+    <p class="section-subtitle" 
+       [style.color]="colors[2]"
+       [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+       [style.font-size.px]="sizes.subtitle">View our latest images and videos</p>
+    <app-media-carousel></app-media-carousel>
+    <div class="upload-buttons">
+      <a routerLink="/upload/image" class="btn btn-primary">Upload Image</a>
+      <a routerLink="/upload/video" class="btn btn-secondary">Upload Video</a>
+    </div>
+  </div>
+</section>
+
 <app-features></app-features>
 
 <app-footer></app-footer>
