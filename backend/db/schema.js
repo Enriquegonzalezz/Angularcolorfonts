@@ -195,11 +195,115 @@ Fuentes.init({
     modelName: 'fuentes'
 })
 
+class Imagenes extends Model {}
+Imagenes.init({
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
+    id_usuario: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Usuarios,
+            key: 'id'
+        }
+    },
+    imagen_url: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    nombre_original: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    nombre_archivo: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    tamano: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    ancho: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    alto: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    tipo_mime: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    es_recortada: {
+        type: DataTypes.TINYINT,
+        defaultValue: 0
+    },
+    datos_recorte: {
+        type: DataTypes.TEXT,
+        allowNull: true
+    },
+    seleccionada: {
+        type: DataTypes.TINYINT,
+        defaultValue: 0
+    },
+    fecha_creacion: {
+        type: DataTypes.DATE,
+        defaultValue: DataTypes.NOW
+    }
+},{
+    sequelize,
+    timestamps: false,
+    modelName: 'imagenes'
+})
+
+class Videos extends Model {}
+
+Videos.init({
+    id_usuario: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: Usuarios,
+            key: 'id'
+        }
+    },
+    video_url: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    tamano: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    seleccionada: {
+        type: DataTypes.TINYINT,
+        defaultValue: 0
+    },extension: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },duracion: {
+        type: DataTypes.STRING,
+        allowNull: false
+    }
+},{
+    sequelize,
+    timestamps: false,
+    modelName: 'videos'
+})
+
 
 Colores.belongsTo(Usuarios, { foreignKey: 'id_usuario' });
 Usuarios.hasMany(Colores, { foreignKey: 'id_usuario' });
 Fuentes.belongsTo(Usuarios, { foreignKey: 'id_usuario' });
 Usuarios.hasMany(Fuentes, { foreignKey: 'id_usuario' });
+Imagenes.belongsTo(Usuarios, { foreignKey: 'id_usuario' });
+Usuarios.hasMany(Imagenes, { foreignKey: 'id_usuario' });
+Videos.belongsTo(Usuarios, { foreignKey: 'id_usuario' });
+Usuarios.hasMany(Videos, { foreignKey: 'id_usuario' });
 
 Usuarios.hasOne(Cabellos, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Cabellos.belongsTo(Usuarios, { foreignKey: 'user_id' });
@@ -217,4 +321,4 @@ Usuarios.hasMany(Criptomonedas, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Criptomonedas.belongsTo(Usuarios, { foreignKey: 'user_id' });
 
 
-module.exports = { Usuarios , Colores , Fuentes , Cabellos, Direcciones, InformacionBancaria, InformacionCompania, Criptomonedas };
+module.exports = { Usuarios , Colores , Fuentes , Cabellos, Direcciones, InformacionBancaria, InformacionCompania, Criptomonedas, Imagenes };

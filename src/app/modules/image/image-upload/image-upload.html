@@ -1,11 +1,11 @@
 <div class="image-upload-container">
   @if (!imagePreview) {
     <div class="upload-section">
-      <h2>Upload Image</h2>
+      <h2>Subir Imagen</h2>
       <div class="upload-box">
         <input type="file" (change)="onFileSelected($event)" accept="image/*" id="fileInput" class="file-input">
         <label for="fileInput" class="file-label">
-          <span>Choose an image</span>
+          <span>Elegir una imagen</span>
         </label>
       </div>
     </div>
@@ -13,39 +13,159 @@
 
   @if (imagePreview && !isCropping) {
     <div class="preview-section">
-      <h2>Image Preview</h2>
+      <h2>Vista Previa de la Imagen</h2>
+      
+      @if (isCropped) {
+        <div class="crop-badge">
+          <span class="badge badge-success">Imagen Recortada</span>
+        </div>
+      }
+      
       <div class="image-preview">
         <img [src]="imagePreview" alt="Preview">
       </div>
       
       <div class="image-metadata">
-        <h3>Image Details</h3>
+        <h3>Detalles de la Imagen</h3>
         <ul>
-          <li><strong>Name:</strong> {{ imageName }}</li>
-          <li><strong>Size:</strong> {{ formatFileSize(imageSize) }}</li>
-          <li><strong>Dimensions:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
+          <li><strong>Nombre:</strong> {{ imageName }}</li>
+          <li><strong>Tamaño:</strong> {{ formatFileSize(imageSize) }}</li>
+          <li><strong>Dimensiones:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
+          @if (isCropped && cropData) {
+            <li><strong>Estado:</strong> Recortada</li>
+            <li><strong>Datos de Recorte:</strong> 
+              <div class="crop-details">
+                <small>X: {{ cropData.x | number:'1.0-2' }}, Y: {{ cropData.y | number:'1.0-2' }}</small><br>
+                <small>Ancho: {{ cropData.width | number:'1.0-2' }}, Alto: {{ cropData.height | number:'1.0-2' }}</small>
+              </div>
+            </li>
+          }
         </ul>
       </div>
       
       <div class="action-buttons">
-        <button (click)="startCropping()" class="btn btn-primary">Crop Image</button>
-        <button (click)="uploadImage()" class="btn btn-success">Upload Image</button>
-        <button (click)="imagePreview = null; imageFile = null;" class="btn btn-danger">Cancel</button>
+        @if (!isCropped) {
+          <button (click)="startCropping()" class="btn btn-primary">Recortar Imagen</button>
+        }
+        <button (click)="uploadImage()" class="btn btn-success">Subir Imagen</button>
+        <button (click)="resetUpload()" class="btn btn-secondary">Nueva Imagen</button>
       </div>
     </div>
   }
 
   @if (isCropping) {
     <div class="cropping-section">
-      <h2>Crop Image</h2>
+      <h2>Recortar Imagen</h2>
       <div class="cropper-container">
         <img #imageElement [src]="imagePreview" alt="Image to crop">
       </div>
       
+      <div class="cropper-instructions">
+        <p>Arrastra y redimensiona el área de recorte. Haz doble clic para cambiar entre modo de movimiento y recorte.</p>
+      </div>
+      
       <div class="action-buttons">
-        <button (click)="applyCrop()" class="btn btn-primary">Apply Crop</button>
-        <button (click)="cancelCrop()" class="btn btn-danger">Cancel</button>
+        <button (click)="applyCrop()" class="btn btn-primary">Aplicar Recorte</button>
+        <button (click)="cancelCrop()" class="btn btn-danger">Cancelar</button>
       </div>
     </div>
   }
+
+  @if (uploadSuccess) {
+    <div class="upload-success">
+      <h3>¡Imagen Subida Exitosamente!</h3>
+      <div class="success-details">
+        <p><strong>URL:</strong> {{ uploadedImageUrl }}</p>
+        <p><strong>Estado:</strong> Guardada en base de datos</p>
+      </div>
+      <button (click)="resetUpload()" class="btn btn-primary">Subir Otra Imagen</button>
+    </div>
+  }
+
+  @if (uploadError) {
+    <div class="upload-error">
+      <h3>Error en la Subida</h3>
+      <p>{{ uploadError }}</p>
+      <button (click)="uploadError = ''" class="btn btn-danger">Cerrar</button>
+    </div>
+  }
+
+  @if (isUploading) {
+    <div class="upload-progress">
+      <h3>Subiendo Imagen...</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="uploadProgress"></div>
+      </div>
+      <p>{{ uploadProgress }}% completado</p>
+    </div>
+  }
+
+  <!-- Lista de Imágenes del Usuario -->
+  <div class="user-images-section">
+    <h2>Mis Imágenes</h2>
+    
+    @if (isLoadingImages) {
+      <div class="loading-images">
+        <p>Cargando imágenes...</p>
+      </div>
+    } @else if (userImages.length === 0) {
+      <div class="no-images">
+        <p>No tienes imágenes subidas aún.</p>
+      </div>
+    } @else {
+      <div class="images-grid">
+        @for (image of userImages; track image.id) {
+          <div class="image-card" [class.selected]="image.selected">
+            <div class="image-card-header">
+              @if (image.selected) {
+                <span class="selection-badge">Seleccionada</span>
+              }
+              @if (image.isCropped) {
+                <span class="crop-badge-small">Recortada</span>
+              }
+            </div>
+            
+            <div class="image-card-body">
+              <img [src]="'http://localhost:3000' + image.imageUrl" [alt]="image.originalName" class="image-thumbnail">
+              
+              <div class="image-info">
+                <h4>{{ image.originalName }}</h4>
+                <p><strong>Tamaño:</strong> {{ formatFileSize(image.size) }}</p>
+                <p><strong>Dimensiones:</strong> {{ image.width }} x {{ image.height }} px</p>
+                <p><strong>Fecha:</strong> {{ image.createdAt | date:'short' }}</p>
+                
+                @if (image.characteristics) {
+                  <div class="characteristics-info">
+                    <p><strong>Características:</strong></p>
+                    <ul>
+                      <li>Original: {{ image.characteristics.originalWidth }} x {{ image.characteristics.originalHeight }} px</li>
+                      <li>Final: {{ image.characteristics.finalWidth }} x {{ image.characteristics.finalHeight }} px</li>
+                      @if (image.characteristics.cropData) {
+                        <li>Recorte: {{ image.characteristics.cropData.width }} x {{ image.characteristics.cropData.height }} px</li>
+                      }
+                    </ul>
+                  </div>
+                }
+              </div>
+            </div>
+            
+            <div class="image-card-actions">
+              <button 
+                (click)="toggleImageSelection(image.id)" 
+                [class]="'btn ' + (image.selected ? 'btn-warning' : 'btn-primary')"
+                class="btn">
+                {{ image.selected ? 'Deseleccionar' : 'Seleccionar' }}
+              </button>
+              
+              <button 
+                (click)="deleteImage(image.id)" 
+                class="btn btn-danger">
+                Eliminar
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
 </div>
