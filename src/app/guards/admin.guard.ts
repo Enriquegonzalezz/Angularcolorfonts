@@ -1,38 +1,25 @@
 import { Injectable } from '@angular/core';
 import { CanActivate, Router } from '@angular/router';
+import { AuthService } from '../services/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminGuard implements CanActivate {
   
-  constructor(private router: Router) {}
+  constructor(
+    private authService: AuthService,
+    private router: Router
+  ) {}
 
   canActivate(): boolean {
-    const token = localStorage.getItem('access_token');
+    // Verificar si el usuario está autenticado y es administrador
+    if (this.authService.isAuthenticated() && this.authService.isAdmin()) {
+      return true;
+    }
     
-    if (!token) {
-      this.router.navigate(['/login']);
-      return false;
-    }
-
-    try {
-      // Decodificar el token para obtener información del usuario
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      
-      // Verificar si el usuario es administrador
-      if (payload.admin === 1) {
-        return true;
-      } else {
-        // Si no es administrador, redirigir al home
-        this.router.navigate(['/']);
-        alert('Acceso denegado. Solo los administradores pueden acceder a esta página.');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error al verificar token:', error);
-      this.router.navigate(['/login']);
-      return false;
-    }
+    // Si no es administrador, redirigir al login
+    this.router.navigate(['/login']);
+    return false;
   }
 } 

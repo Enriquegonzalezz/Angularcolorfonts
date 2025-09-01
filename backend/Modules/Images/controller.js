@@ -22,8 +22,31 @@ const uploadImage = async (req, res) => {
       return res.status(400).json({ message: 'No image file provided' });
     }
 
-    // Get user ID from request (assuming it's passed in the request)
-    const userId = req.body.userId || req.user?.id || 1; // Default to 1 for testing
+    // Get user ID from request
+    const userId = req.body.userId || req.user?.id;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    
+    // Verificar que el usuario existe
+    try {
+      const { Usuarios } = require('../../db/schema');
+      const user = await Usuarios.findByPk(userId);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+      
+      // Verificar que el usuario es administrador
+      if (user.admin !== 1) {
+        return res.status(403).json({ message: 'Access denied. Admin privileges required.' });
+      }
+      
+      console.log(`Usuario autenticado: ${user.username} (ID: ${userId})`);
+    } catch (error) {
+      console.error('Error verificando usuario:', error);
+      return res.status(500).json({ message: 'Error verifying user' });
+    }
 
     // Generate unique filename
     const fileExtension = path.extname(req.file.originalname);
@@ -38,30 +61,77 @@ const uploadImage = async (req, res) => {
     try {
       const sizeOf = require('image-size');
       dimensions = sizeOf(filePath);
+      console.log('Dimensiones obtenidas con image-size:', dimensions);
     } catch (err) {
-      console.error('Error getting image dimensions:', err);
+      console.error('Error getting image dimensions with image-size:', err);
+      // Fallback: usar las dimensiones del request si están disponibles
+      if (req.body.originalWidth && req.body.originalHeight) {
+        dimensions = {
+          width: parseInt(req.body.originalWidth),
+          height: parseInt(req.body.originalHeight)
+        };
+        console.log('Usando dimensiones del request como fallback:', dimensions);
+      }
     }
 
     // Check if this is a cropped image
     const isCropped = req.body.isCropped === 'true';
-    const cropData = req.body.cropData ? JSON.parse(req.body.cropData) : null;
+    let cropData = null;
+    
+    try {
+      if (req.body.cropData) {
+        cropData = JSON.parse(req.body.cropData);
+        console.log('Datos de recorte recibidos:', cropData);
+      }
+    } catch (error) {
+      console.error('Error parsing crop data:', error);
+    }
+
+    // Get original dimensions from request or calculated
+    const originalWidth = parseInt(req.body.originalWidth) || dimensions.width || 0;
+    const originalHeight = parseInt(req.body.originalHeight) || dimensions.height || 0;
 
     // Always store image characteristics (either from crop or original)
     const imageCharacteristics = {
-      originalWidth: dimensions.width || 0,
-      originalHeight: dimensions.height || 0,
+      originalWidth: originalWidth,
+      originalHeight: originalHeight,
       originalSize: req.file.size,
-      originalMimeType: req.file.mimetype
+      originalMimeType: req.file.mimetype,
+      uploadedAt: new Date().toISOString()
     };
 
     // If cropped, add crop data; if not, store original characteristics
     if (isCropped && cropData) {
       imageCharacteristics.cropData = cropData;
-      imageCharacteristics.finalWidth = cropData.width || dimensions.width || 0;
-      imageCharacteristics.finalHeight = cropData.height || dimensions.height || 0;
+      // Para imágenes recortadas, usar las dimensiones del recorte
+      imageCharacteristics.finalWidth = Math.round(cropData.width) || originalWidth || 0;
+      imageCharacteristics.finalHeight = Math.round(cropData.height) || originalHeight || 0;
+      imageCharacteristics.isCropped = true;
+      console.log('✂️ Imagen recortada - dimensiones finales:', imageCharacteristics.finalWidth, 'x', imageCharacteristics.finalHeight);
+      console.log('📊 Datos de recorte guardados:', JSON.stringify(cropData, null, 2));
+    } else if (isCropped) {
+      // Si está marcada como recortada pero no hay datos, usar dimensiones del archivo
+      imageCharacteristics.finalWidth = originalWidth || 0;
+      imageCharacteristics.finalHeight = originalHeight || 0;
+      imageCharacteristics.isCropped = true;
+      console.log('⚠️ Imagen marcada como recortada sin datos específicos - usando dimensiones del archivo:', imageCharacteristics.finalWidth, 'x', imageCharacteristics.finalHeight);
     } else {
-      imageCharacteristics.finalWidth = dimensions.width || 0;
-      imageCharacteristics.finalHeight = dimensions.height || 0;
+      // Para imágenes no recortadas, usar las dimensiones originales
+      imageCharacteristics.finalWidth = originalWidth || 0;
+      imageCharacteristics.finalHeight = originalHeight || 0;
+      imageCharacteristics.isCropped = false;
+      console.log('📷 Imagen original - dimensiones:', imageCharacteristics.finalWidth, 'x', imageCharacteristics.finalHeight);
+    }
+
+    // Guardar también las dimensiones originales para referencia
+    imageCharacteristics.originalWidth = originalWidth;
+    imageCharacteristics.originalHeight = originalHeight;
+
+    // Asegurar que las dimensiones no sean 0
+    if (imageCharacteristics.finalWidth === 0 || imageCharacteristics.finalHeight === 0) {
+      console.warn('⚠️ Dimensiones 0 detectadas, usando valores por defecto');
+      imageCharacteristics.finalWidth = imageCharacteristics.finalWidth || 800;
+      imageCharacteristics.finalHeight = imageCharacteristics.finalHeight || 600;
     }
 
     // Create image record in database

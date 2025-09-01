@@ -19,29 +19,82 @@
         <div class="crop-badge">
           <span class="badge badge-success">Imagen Recortada</span>
         </div>
-      }
-      
-      <div class="image-preview">
-        <img [src]="imagePreview" alt="Preview">
-      </div>
-      
-      <div class="image-metadata">
-        <h3>Detalles de la Imagen</h3>
-        <ul>
-          <li><strong>Nombre:</strong> {{ imageName }}</li>
-          <li><strong>Tamaño:</strong> {{ formatFileSize(imageSize) }}</li>
-          <li><strong>Dimensiones:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
-          @if (isCropped && cropData) {
-            <li><strong>Estado:</strong> Recortada</li>
-            <li><strong>Datos de Recorte:</strong> 
-              <div class="crop-details">
-                <small>X: {{ cropData.x | number:'1.0-2' }}, Y: {{ cropData.y | number:'1.0-2' }}</small><br>
-                <small>Ancho: {{ cropData.width | number:'1.0-2' }}, Alto: {{ cropData.height | number:'1.0-2' }}</small>
+        
+        <!-- Comparación Original vs Recortada -->
+        <div class="image-comparison">
+          <div class="comparison-container">
+                         <div class="original-image-section">
+               <h3>📷 Imagen Original</h3>
+               <div class="image-preview">
+                 <img [src]="originalImagePreview" alt="Original" class="original-preview">
+               </div>
+              <div class="image-metadata">
+                <h4>Detalles Originales</h4>
+                <ul>
+                  <li><strong>Nombre:</strong> {{ imageName }}</li>
+                  <li><strong>Tamaño:</strong> {{ formatFileSize(originalImageSize) }}</li>
+                  <li><strong>Dimensiones:</strong> {{ originalImageWidth }} x {{ originalImageHeight }} px</li>
+                  <li><strong>Estado:</strong> <span class="badge badge-secondary">Original</span></li>
+                </ul>
               </div>
-            </li>
-          }
-        </ul>
-      </div>
+            </div>
+            
+            <div class="vs-separator">
+              <div class="vs-circle">VS</div>
+            </div>
+            
+            <div class="cropped-image-section">
+              <h3>✂️ Imagen Recortada</h3>
+              <div class="image-preview">
+                <img [src]="imagePreview" alt="Cropped" class="cropped-preview">
+              </div>
+              <div class="image-metadata">
+                <h4>Detalles Recortados</h4>
+                <ul>
+                  <li><strong>Nombre:</strong> {{ imageName }}</li>
+                  <li><strong>Tamaño:</strong> {{ formatFileSize(imageSize) }}</li>
+                  <li><strong>Dimensiones:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
+                  <li><strong>Estado:</strong> <span class="badge badge-success">Recortada</span></li>
+                                     @if (cropData) {
+                     <li><strong>Datos de Recorte:</strong> 
+                       <div class="crop-details">
+                         <small>Posición: X: {{ cropData.x | number:'1.0-2' }}, Y: {{ cropData.y | number:'1.0-2' }}</small><br>
+                         <small>Área: {{ cropData.width | number:'1.0-2' }} x {{ cropData.height | number:'1.0-2' }} px</small>
+                         @if (cropData.rotate !== 0) {
+                           <br><small>Rotación: {{ cropData.rotate }}°</small>
+                         }
+                       </div>
+                     </li>
+                   }
+                   
+                   <!-- Mostrar diferencia de tamaño -->
+                   <li><strong>Reducción de Tamaño:</strong> 
+                     <span class="size-reduction-badge">
+                       {{ ((originalImageSize - imageSize) / originalImageSize * 100) | number:'1.0-1' }}% más pequeño
+                     </span>
+                   </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+      } @else {
+        <!-- Vista normal para imagen no recortada -->
+        <div class="image-preview">
+          <img [src]="imagePreview" alt="Preview">
+        </div>
+        
+        <div class="image-metadata">
+          <h3>Detalles de la Imagen</h3>
+          <ul>
+            <li><strong>Nombre:</strong> {{ imageName }}</li>
+            <li><strong>Tamaño:</strong> {{ formatFileSize(imageSize) }}</li>
+            <li><strong>Dimensiones:</strong> {{ imageWidth }} x {{ imageHeight }} px</li>
+            <li><strong>Estado:</strong> <span class="badge badge-secondary">Original</span></li>
+          </ul>
+        </div>
+      }
       
       <div class="action-buttons">
         @if (!isCropped) {
@@ -121,12 +174,14 @@
                 <span class="selection-badge">Seleccionada</span>
               }
               @if (image.isCropped) {
-                <span class="crop-badge-small">Recortada</span>
+                <span class="crop-badge-small">✂️ Recortada</span>
+              } @else {
+                <span class="original-badge">📷 Original</span>
               }
             </div>
             
             <div class="image-card-body">
-              <img [src]="'http://localhost:3000' + image.imageUrl" [alt]="image.originalName" class="image-thumbnail">
+              <img [src]="'http://localhost:3000/public' + image.imageUrl" [alt]="image.originalName" class="image-thumbnail">
               
               <div class="image-info">
                 <h4>{{ image.originalName }}</h4>
@@ -138,10 +193,15 @@
                   <div class="characteristics-info">
                     <p><strong>Características:</strong></p>
                     <ul>
-                      <li>Original: {{ image.characteristics.originalWidth }} x {{ image.characteristics.originalHeight }} px</li>
-                      <li>Final: {{ image.characteristics.finalWidth }} x {{ image.characteristics.finalHeight }} px</li>
-                      @if (image.characteristics.cropData) {
-                        <li>Recorte: {{ image.characteristics.cropData.width }} x {{ image.characteristics.cropData.height }} px</li>
+                      @if (image.isCropped) {
+                        <li><strong>Original:</strong> {{ image.characteristics.originalWidth }} x {{ image.characteristics.originalHeight }} px</li>
+                        <li><strong>Recortada:</strong> {{ image.characteristics.finalWidth }} x {{ image.characteristics.finalHeight }} px</li>
+                        @if (image.characteristics.cropData) {
+                          <li><strong>Área recortada:</strong> {{ image.characteristics.cropData.width }} x {{ image.characteristics.cropData.height }} px</li>
+                          <li><strong>Posición:</strong> X:{{ image.characteristics.cropData.x | number:'1.0-0' }}, Y:{{ image.characteristics.cropData.y | number:'1.0-0' }}</li>
+                        }
+                      } @else {
+                        <li><strong>Dimensiones:</strong> {{ image.characteristics.finalWidth }} x {{ image.characteristics.finalHeight }} px</li>
                       }
                     </ul>
                   </div>

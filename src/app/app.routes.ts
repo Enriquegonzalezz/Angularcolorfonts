@@ -20,8 +20,8 @@ export const routes: Routes = [
   { path: 'fonts', component: FontsViewComponent },
   { path: 'formulario', component: FormularioView },
   { path: 'usuarios', component: DatatableView, canActivate: [AdminGuard] },
-  { path: 'upload/image', component: ImageUpload },
-  { path: 'upload/video', component: VideoUpload },
-  { path: 'media', component: MediaCarousel },
+  { path: 'upload/image', component: ImageUpload, canActivate: [AdminGuard] },
+  { path: 'upload/video', component: VideoUpload, canActivate: [AdminGuard] },
+  { path: 'media', component: MediaCarousel, canActivate: [AdminGuard] },
   { path: '**', redirectTo: '' }
 ];
