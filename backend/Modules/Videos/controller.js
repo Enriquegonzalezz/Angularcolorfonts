@@ -74,10 +74,10 @@ const uploadVideo = async (req, res) => {
 const uploadSubtitles = async (req, res) => {
   try {
     const { videoId } = req.params;
-    const { language, text, startTime, endTime, color, backgroundColor, fontSize, fontFamily } = req.body;
+    const { language, entries, color, backgroundColor, fontSize, fontFamily } = req.body;
     
-    if (!language || !text) {
-      return res.status(400).json({ message: 'Language and text are required' });
+    if (!language || !entries || !Array.isArray(entries)) {
+      return res.status(400).json({ message: 'Language and subtitle entries array are required' });
     }
     
     // Generate unique filename for subtitle file
@@ -90,9 +90,11 @@ const uploadSubtitles = async (req, res) => {
       id: subtitleId,
       videoId,
       language,
-      text,
-      startTime: parseFloat(startTime) || 0,
-      endTime: parseFloat(endTime) || 0,
+      entries: entries.map(entry => ({
+        startTime: parseFloat(entry.startTime) || 0,
+        endTime: parseFloat(entry.endTime) || 0,
+        text: entry.text || ''
+      })),
       color: color || '#ffffff',
       backgroundColor: backgroundColor || '#000000',
       fontSize: fontSize || '16px',

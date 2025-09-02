@@ -109,17 +109,28 @@
               <!-- Subtitles Section -->
               @if (selectedItem.subtitles && selectedItem.subtitles.length > 0) {
                 <div class="subtitles-section">
-                  <h4>Subtitles</h4>
+                  <h4>Subtítulos</h4>
                   @for (subtitle of selectedItem.subtitles; track subtitle.id) {
                     <div class="subtitle-item">
-                      <h5>{{ subtitle.language === 'en' ? 'English' : 'Spanish' }}</h5>
+                      <h5>{{ subtitle.language === 'en' ? 'Inglés' : 'Español' }}</h5>
                       <div class="subtitle-preview" [ngStyle]="{
                         'color': subtitle.color,
                         'background-color': subtitle.backgroundColor,
                         'font-size': subtitle.fontSize,
                         'font-family': subtitle.fontFamily
                       }">
-                        {{ subtitle.text }}
+                        @if (subtitle.entries && subtitle.entries.length > 0) {
+                          <div class="subtitle-entries">
+                            @for (entry of subtitle.entries; track $index) {
+                              <div class="subtitle-entry">
+                                <span class="time-range">{{ formatTime(entry.startTime) }} - {{ formatTime(entry.endTime) }}</span>
+                                <p>{{ entry.text }}</p>
+                              </div>
+                            }
+                          </div>
+                        } @else {
+                          {{ subtitle.text || 'Sin texto de subtítulos' }}
+                        }
                       </div>
                     </div>
                   }

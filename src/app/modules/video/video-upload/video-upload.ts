@@ -1,24 +1,33 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders, HttpEventType, HttpErrorResponse, HttpClientModule } from '@angular/common/http';
+import { SubtitleGenerator } from '../utils/subtitle-generator';
+
+interface SubtitleEntry {
+  startTime: number;
+  endTime: number;
+  text: string;
+}
 
 interface Subtitle {
   id: string;
   language: 'en' | 'es';
   text: string;
-  startTime: number;
-  endTime: number;
+  entries: SubtitleEntry[];
   color: string;
   backgroundColor: string;
   fontSize: string;
   fontFamily: string;
+  vttUrl?: string;
 }
 
 interface AudioTrack {
   id: string;
   language: 'en' | 'es';
   file: File | null;
+  url?: string;
+  mimeType?: string;
 }
 
 @Component({
@@ -28,7 +37,7 @@ interface AudioTrack {
   templateUrl: './video-upload.html',
   styleUrl: './video-upload.css'
 })
-export class VideoUpload implements OnInit {
+export class VideoUpload implements OnInit, OnDestroy {
   @ViewChild('videoElement', { static: false }) videoElement!: ElementRef<HTMLVideoElement>;
   
   videoFile: File | null = null;
@@ -72,8 +81,7 @@ export class VideoUpload implements OnInit {
         id: 'en-subtitle',
         language: 'en',
         text: '',
-        startTime: 0,
-        endTime: 0,
+        entries: [],
         color: '#ffffff',
         backgroundColor: '#000000',
         fontSize: '16px',
@@ -83,8 +91,7 @@ export class VideoUpload implements OnInit {
         id: 'es-subtitle',
         language: 'es',
         text: '',
-        startTime: 0,
-        endTime: 0,
+        entries: [],
         color: '#ffffff',
         backgroundColor: '#000000',
         fontSize: '16px',
@@ -105,6 +112,21 @@ export class VideoUpload implements OnInit {
         file: null
       }
     ];
+  }
+  
+  ngOnDestroy(): void {
+    // Clean up any blob URLs to prevent memory leaks
+    this.subtitles.forEach(subtitle => {
+      if (subtitle.vttUrl) {
+        URL.revokeObjectURL(subtitle.vttUrl);
+      }
+    });
+    
+    this.audioTracks.forEach(track => {
+      if (track.url) {
+        URL.revokeObjectURL(track.url);
+      }
+    });
   }
   
   onFileSelected(event: Event): void {
@@ -142,8 +164,23 @@ export class VideoUpload implements OnInit {
       const audioTrack = this.audioTracks.find(track => track.language === language);
       
       if (audioTrack) {
+        // Clean up previous URL if exists
+        if (audioTrack.url) {
+          URL.revokeObjectURL(audioTrack.url);
+        }
+        
         audioTrack.file = audioFile;
+        audioTrack.mimeType = audioFile.type;
       }
+    }
+  }
+  
+  processAudioTrack(language: 'en' | 'es'): void {
+    const audioTrack = this.audioTracks.find(track => track.language === language);
+    
+    if (audioTrack && audioTrack.file) {
+      // Create a blob URL for the audio file
+      audioTrack.url = URL.createObjectURL(audioTrack.file);
     }
   }
   
@@ -161,8 +198,65 @@ export class VideoUpload implements OnInit {
   editSubtitle(language: 'en' | 'es'): void {
     const subtitle = this.subtitles.find(sub => sub.language === language);
     if (subtitle) {
-      this.currentSubtitle = { ...subtitle };
+      // Create a deep copy to avoid modifying the original until save
+      this.currentSubtitle = { 
+        ...subtitle,
+        entries: subtitle.entries.map(entry => ({ ...entry }))
+      };
       this.editingSubtitle = true;
+    }
+  }
+  
+  addSubtitleEntry(): void {
+    if (this.currentSubtitle) {
+      // Add a new entry with default values
+      this.currentSubtitle.entries.push({
+        startTime: 0,
+        endTime: this.videoDuration > 5 ? 5 : this.videoDuration,
+        text: ''
+      });
+    }
+  }
+  
+  removeSubtitleEntry(index: number): void {
+    if (this.currentSubtitle && this.currentSubtitle.entries.length > index) {
+      this.currentSubtitle.entries.splice(index, 1);
+    }
+  }
+  
+  generateVTT(language: 'en' | 'es'): void {
+    const subtitle = this.subtitles.find(sub => sub.language === language);
+    
+    if (subtitle && subtitle.entries.length > 0) {
+      // Clean up previous URL if exists
+      if (subtitle.vttUrl) {
+        URL.revokeObjectURL(subtitle.vttUrl);
+      }
+      
+      // Generate VTT content
+      const vttContent = SubtitleGenerator.generateVTT(
+        subtitle.entries,
+        {
+          color: subtitle.color,
+          backgroundColor: subtitle.backgroundColor,
+          fontSize: subtitle.fontSize,
+          fontFamily: subtitle.fontFamily
+        }
+      );
+      
+      // Create blob URL
+      subtitle.vttUrl = SubtitleGenerator.createBlobUrl(vttContent);
+    }
+  }
+  
+  previewSubtitles(language: 'en' | 'es'): void {
+    const subtitle = this.subtitles.find(sub => sub.language === language);
+    
+    if (subtitle && subtitle.vttUrl && this.videoElement) {
+      // Reset video to beginning
+      this.videoElement.nativeElement.currentTime = 0;
+      // Start playing with subtitles
+      this.videoElement.nativeElement.play();
     }
   }
   
@@ -170,7 +264,13 @@ export class VideoUpload implements OnInit {
     if (this.currentSubtitle) {
       const index = this.subtitles.findIndex(sub => sub.language === this.currentSubtitle?.language);
       if (index !== -1) {
+        // Update the subtitle with the edited version
         this.subtitles[index] = { ...this.currentSubtitle };
+        
+        // If there are entries, automatically generate the VTT
+        if (this.currentSubtitle.entries.length > 0) {
+          this.generateVTT(this.currentSubtitle.language);
+        }
       }
       this.currentSubtitle = null;
       this.editingSubtitle = false;
@@ -198,7 +298,7 @@ export class VideoUpload implements OnInit {
   
   uploadVideo(): void {
     if (!this.videoFile) {
-      this.uploadError = 'No video file selected';
+      this.uploadError = 'No se ha seleccionado ningún video';
       return;
     }
     
@@ -225,7 +325,7 @@ export class VideoUpload implements OnInit {
           
           // Upload subtitles for each language
           this.subtitles.forEach(subtitle => {
-            if (subtitle.text) {
+            if (subtitle.entries && subtitle.entries.length > 0) {
               this.uploadSubtitle(response.video.id, subtitle);
             }
           });
@@ -240,7 +340,7 @@ export class VideoUpload implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.isUploading = false;
-        this.uploadError = `Upload failed: ${error.message}`;
+        this.uploadError = `Error en la subida: ${error.message}`;
         console.error('Error uploading video:', error);
       },
       complete: () => {
@@ -249,8 +349,59 @@ export class VideoUpload implements OnInit {
     });
   }
   
+  resetVideo(): void {
+    // Clean up any blob URLs
+    this.subtitles.forEach(subtitle => {
+      if (subtitle.vttUrl) {
+        URL.revokeObjectURL(subtitle.vttUrl);
+      }
+    });
+    
+    this.audioTracks.forEach(track => {
+      if (track.url) {
+        URL.revokeObjectURL(track.url);
+      }
+    });
+    
+    // Reset all state
+    this.videoPreview = null;
+    this.videoFile = null;
+    this.videoName = '';
+    this.videoSize = 0;
+    this.videoDuration = 0;
+    this.videoFormat = '';
+    
+    // Reset subtitles and audio tracks
+    this.subtitles.forEach(subtitle => {
+      subtitle.text = '';
+      subtitle.entries = [];
+      subtitle.vttUrl = undefined;
+    });
+    
+    this.audioTracks.forEach(track => {
+      track.file = null;
+      track.url = undefined;
+      track.mimeType = undefined;
+    });
+  }
+  
   private uploadSubtitle(videoId: string, subtitle: Subtitle): void {
-    this.http.post(`${this.apiUrl}/${videoId}/subtitles`, subtitle)
+    // Create a VTT file if not already created
+    if (!subtitle.vttUrl && subtitle.entries.length > 0) {
+      this.generateVTT(subtitle.language);
+    }
+    
+    // Prepare subtitle data for upload
+    const subtitleData = {
+      language: subtitle.language,
+      entries: subtitle.entries,
+      color: subtitle.color,
+      backgroundColor: subtitle.backgroundColor,
+      fontSize: subtitle.fontSize,
+      fontFamily: subtitle.fontFamily
+    };
+    
+    this.http.post(`${this.apiUrl}/${videoId}/subtitles`, subtitleData)
       .subscribe({
         next: (response) => {
           console.log(`${subtitle.language} subtitle uploaded successfully:`, response);

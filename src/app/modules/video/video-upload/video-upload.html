@@ -1,11 +1,11 @@
 <div class="video-upload-container">
   @if (!videoPreview) {
     <div class="upload-section">
-      <h2>Upload Video</h2>
+      <h2>Subir Video</h2>
       <div class="upload-box">
         <input type="file" (change)="onFileSelected($event)" accept="video/*" id="videoInput" class="file-input">
         <label for="videoInput" class="file-label">
-          <span>Choose a video</span>
+          <span>Elegir un video</span>
         </label>
       </div>
     </div>
@@ -13,54 +13,86 @@
 
   @if (videoPreview) {
     <div class="preview-section">
-      <h2>Video Preview</h2>
+      <h2>Vista Previa del Video</h2>
       <div class="video-preview">
-        <video #videoElement [src]="videoPreview" controls></video>
+        <video #videoElement [src]="videoPreview" controls>
+          @for (subtitle of subtitles; track subtitle.language) {
+            @if (subtitle.vttUrl) {
+              <track 
+                [src]="subtitle.vttUrl" 
+                [label]="subtitle.language === 'en' ? 'English' : 'Español'" 
+                [srclang]="subtitle.language" 
+                [default]="subtitle.language === 'en'"
+                kind="subtitles">
+            }
+          }
+          @for (track of audioTracks; track track.language) {
+            @if (track.url) {
+              <source [src]="track.url" [type]="track.mimeType">
+            }
+          }
+        </video>
       </div>
     
     <div class="video-metadata">
-      <h3>Video Details</h3>
+      <h3>Detalles del Video</h3>
       <ul>
-        <li><strong>Name:</strong> {{ videoName }}</li>
-        <li><strong>Size:</strong> {{ formatFileSize(videoSize) }}</li>
-        <li><strong>Format:</strong> {{ videoFormat }}</li>
-        <li><strong>Duration:</strong> {{ formatTime(videoDuration) }}</li>
+        <li><strong>Nombre:</strong> {{ videoName }}</li>
+        <li><strong>Tamaño:</strong> {{ formatFileSize(videoSize) }}</li>
+        <li><strong>Formato:</strong> {{ videoFormat }}</li>
+        <li><strong>Duración:</strong> {{ formatTime(videoDuration) }}</li>
       </ul>
     </div>
     
     <!-- Subtitles Section -->
     <div class="subtitles-section">
-      <h3>Subtitles</h3>
+      <h3>Subtítulos</h3>
       
       @for (subtitle of subtitles; track subtitle.language) {
         <div class="subtitle-language">
-          <h4>{{ subtitle.language === 'en' ? 'English' : 'Spanish' }} Subtitles</h4>
+          <h4>{{ subtitle.language === 'en' ? 'Subtítulos en Inglés' : 'Subtítulos en Español' }}</h4>
           <div class="subtitle-preview" [ngStyle]="{
             'color': subtitle.color,
             'background-color': subtitle.backgroundColor,
             'font-size': subtitle.fontSize,
             'font-family': subtitle.fontFamily
           }">
-            {{ subtitle.text || 'Sample subtitle text' }}
+            {{ subtitle.text || 'Texto de ejemplo para subtítulos' }}
           </div>
-          <button (click)="editSubtitle(subtitle.language)" class="btn btn-primary">Edit Subtitles</button>
+          <div class="subtitle-status">
+            <span class="status-badge" [class.active]="subtitle.vttUrl">{{ subtitle.vttUrl ? 'Subtítulos Activos' : 'Sin Subtítulos' }}</span>
+          </div>
+          <div class="subtitle-actions">
+            <button (click)="editSubtitle(subtitle.language)" class="btn btn-primary">Editar Subtítulos</button>
+            <button (click)="generateVTT(subtitle.language)" class="btn btn-success" [disabled]="!subtitle.text">Generar Subtítulos</button>
+            <button (click)="previewSubtitles(subtitle.language)" class="btn btn-info" [disabled]="!subtitle.vttUrl">Vista Previa</button>
+          </div>
         </div>
       }
     </div>
     
     <!-- Audio Tracks Section -->
     <div class="audio-tracks-section">
-      <h3>Audio Tracks</h3>
+      <h3>Pistas de Audio</h3>
       
       @for (track of audioTracks; track track.language) {
         <div class="audio-track">
-          <h4>{{ track.language === 'en' ? 'English' : 'Spanish' }} Audio</h4>
+          <h4>{{ track.language === 'en' ? 'Audio en Inglés' : 'Audio en Español' }}</h4>
           <div class="audio-upload">
             <input type="file" (change)="onAudioSelected($event, track.language)" accept="audio/*" [id]="'audioInput-' + track.language" class="file-input">
             <label [for]="'audioInput-' + track.language" class="file-label">
-              <span>{{ track.file ? track.file.name : 'Choose audio file' }}</span>
+              <span>{{ track.file ? track.file.name : 'Seleccionar archivo de audio' }}</span>
             </label>
           </div>
+          <div class="audio-status">
+            <span class="status-badge" [class.active]="track.url">{{ track.url ? 'Audio Activo' : 'Sin Audio' }}</span>
+          </div>
+          @if (track.file) {
+            <div class="audio-preview">
+              <audio controls [src]="track.url" *ngIf="track.url"></audio>
+              <button (click)="processAudioTrack(track.language)" class="btn btn-success" *ngIf="!track.url">Procesar Audio</button>
+            </div>
+          }
         </div>
       }
     </div>
@@ -69,74 +101,104 @@
     @if (editingSubtitle && currentSubtitle) {
       <div class="subtitle-editor-modal">
         <div class="modal-content">
-          <h3>Edit {{ currentSubtitle.language === 'en' ? 'English' : 'Spanish' }} Subtitles</h3>
-        
-        <div class="form-group">
-          <label for="subtitleText">Text</label>
-          <textarea id="subtitleText" [(ngModel)]="currentSubtitle.text" rows="4"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label for="startTime">Start Time (seconds)</label>
-          <input type="number" id="startTime" [(ngModel)]="currentSubtitle.startTime" min="0" [max]="videoDuration">
-        </div>
-        
-        <div class="form-group">
-          <label for="endTime">End Time (seconds)</label>
-          <input type="number" id="endTime" [(ngModel)]="currentSubtitle.endTime" [min]="currentSubtitle.startTime" [max]="videoDuration">
-        </div>
-        
-        <div class="form-group">
-          <label for="textColor">Text Color</label>
-          <input type="color" id="textColor" [(ngModel)]="currentSubtitle.color">
-        </div>
-        
-        <div class="form-group">
-          <label for="bgColor">Background Color</label>
-          <input type="color" id="bgColor" [(ngModel)]="currentSubtitle.backgroundColor">
-        </div>
-        
-        <div class="form-group">
-          <label for="fontSize">Font Size</label>
-          <select id="fontSize" [(ngModel)]="currentSubtitle.fontSize">
-            @for (size of fontSizes; track size) {
-              <option [value]="size">{{ size }}</option>
-            }
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="fontFamily">Font Family</label>
-          <select id="fontFamily" [(ngModel)]="currentSubtitle.fontFamily">
-            @for (font of fontFamilies; track font) {
-              <option [value]="font">{{ font }}</option>
-            }
-          </select>
-        </div>
-        
-        <div class="subtitle-preview" [ngStyle]="{
-          'color': currentSubtitle.color,
-          'background-color': currentSubtitle.backgroundColor,
-          'font-size': currentSubtitle.fontSize,
-          'font-family': currentSubtitle.fontFamily
-        }">
-          {{ currentSubtitle.text || 'Sample subtitle text' }}
-        </div>
-        
-        <div class="action-buttons">
-          <button (click)="saveSubtitle()" class="btn btn-success">Save</button>
-          <button (click)="cancelEditSubtitle()" class="btn btn-danger">Cancel</button>
+          <h3>Editar Subtítulos en {{ currentSubtitle.language === 'en' ? 'Inglés' : 'Español' }}</h3>
+          
+          <div class="form-group">
+            <label for="subtitleText">Texto</label>
+            <textarea id="subtitleText" [(ngModel)]="currentSubtitle.text" rows="4" placeholder="Ingrese el texto del subtítulo"></textarea>
+          </div>
+          
+          <div class="subtitle-entries">
+            <h4>Entradas de Subtítulos</h4>
+            <button (click)="addSubtitleEntry()" class="btn btn-sm btn-primary">Añadir Entrada</button>
+            
+            <div class="subtitle-entries-list">
+              @for (entry of currentSubtitle.entries; track $index) {
+                <div class="subtitle-entry">
+                  <div class="entry-header">
+                    <span>Entrada #{{ $index + 1 }}</span>
+                    <button (click)="removeSubtitleEntry($index)" class="btn btn-sm btn-danger">Eliminar</button>
+                  </div>
+                  <div class="entry-times">
+                    <div class="form-group">
+                      <label>Tiempo Inicial (segundos)</label>
+                      <input type="number" [(ngModel)]="entry.startTime" min="0" [max]="videoDuration" step="0.1">
+                    </div>
+                    <div class="form-group">
+                      <label>Tiempo Final (segundos)</label>
+                      <input type="number" [(ngModel)]="entry.endTime" [min]="entry.startTime" [max]="videoDuration" step="0.1">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>Texto</label>
+                    <textarea [(ngModel)]="entry.text" rows="2"></textarea>
+                  </div>
+                </div>
+              }
+              
+              @if (currentSubtitle.entries.length === 0) {
+                <div class="no-entries">No hay entradas de subtítulos. Haga clic en "Añadir Entrada" para crear una.</div>
+              }
+            </div>
+          </div>
+          
+          <div class="subtitle-styles">
+            <h4>Estilos de Subtítulos</h4>
+            
+            <div class="style-options">
+              <div class="form-group">
+                <label for="textColor">Color de Texto</label>
+                <input type="color" id="textColor" [(ngModel)]="currentSubtitle.color">
+              </div>
+              
+              <div class="form-group">
+                <label for="bgColor">Color de Fondo</label>
+                <input type="color" id="bgColor" [(ngModel)]="currentSubtitle.backgroundColor">
+              </div>
+              
+              <div class="form-group">
+                <label for="fontSize">Tamaño de Fuente</label>
+                <select id="fontSize" [(ngModel)]="currentSubtitle.fontSize">
+                  @for (size of fontSizes; track size) {
+                    <option [value]="size">{{ size }}</option>
+                  }
+                </select>
+              </div>
+              
+              <div class="form-group">
+                <label for="fontFamily">Tipografía</label>
+                <select id="fontFamily" [(ngModel)]="currentSubtitle.fontFamily">
+                  @for (font of fontFamilies; track font) {
+                    <option [value]="font">{{ font }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            
+            <div class="subtitle-preview" [ngStyle]="{
+              'color': currentSubtitle.color,
+              'background-color': currentSubtitle.backgroundColor,
+              'font-size': currentSubtitle.fontSize,
+              'font-family': currentSubtitle.fontFamily
+            }">
+              {{ currentSubtitle.text || 'Texto de ejemplo para subtítulos' }}
+            </div>
+          </div>
+          
+          <div class="action-buttons">
+            <button (click)="saveSubtitle()" class="btn btn-success">Guardar</button>
+            <button (click)="cancelEditSubtitle()" class="btn btn-danger">Cancelar</button>
+          </div>
         </div>
       </div>
-    </div>
     }
     
-    <!-- Upload Status -->
+  <!-- Upload Status -->
     @if (isUploading || uploadSuccess || uploadError) {
       <div class="upload-status">
         @if (isUploading) {
           <div class="progress-container">
-            <h4>Uploading Video...</h4>
+            <h4>Subiendo Video...</h4>
             <div class="progress">
               <div class="progress-bar" [style.width.%]="uploadProgress">{{ uploadProgress }}%</div>
             </div>
@@ -145,17 +207,17 @@
         
         @if (uploadSuccess) {
           <div class="success-message">
-            <h4>Upload Successful!</h4>
-            <p>Your video has been uploaded successfully.</p>
+            <h4>¡Subida Exitosa!</h4>
+            <p>Tu video ha sido subido exitosamente.</p>
             @if (uploadedVideoUrl) {
-              <p>Video URL: {{ uploadedVideoUrl }}</p>
+              <p>URL del Video: {{ uploadedVideoUrl }}</p>
             }
           </div>
         }
         
         @if (uploadError) {
           <div class="error-message">
-            <h4>Upload Failed</h4>
+            <h4>Error en la Subida</h4>
             <p>{{ uploadError }}</p>
           </div>
         }
@@ -163,8 +225,8 @@
     }
     
     <div class="action-buttons">
-      <button (click)="uploadVideo()" class="btn btn-success" [disabled]="isUploading">Upload Video</button>
-      <button (click)="videoPreview = null; videoFile = null;" class="btn btn-danger" [disabled]="isUploading">Cancel</button>
+      <button (click)="uploadVideo()" class="btn btn-success" [disabled]="isUploading">Subir Video</button>
+      <button (click)="resetVideo()" class="btn btn-danger" [disabled]="isUploading">Cancelar</button>
     </div>
   </div>
   }
