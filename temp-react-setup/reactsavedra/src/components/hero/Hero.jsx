@@ -1,0 +1,140 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
+import { useAuth } from '../../services/AuthContext';
+import { useStyles } from '../../services/StyleContext';
+import HeroCards from '../hero-cards/HeroCards';
+import './Hero.css';
+
+const Hero = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const navigate = useNavigate();
+  const { isAuthenticated, isAdmin: checkAdmin } = useAuth();
+  const { colors, fonts, sizes, loading } = useStyles();
+
+  // Verificar autenticación al cargar el componente
+  useEffect(() => {
+    setIsLoggedIn(isAuthenticated());
+    setIsAdmin(checkAdmin());
+    checkAuthStatus();
+  }, [isAuthenticated, checkAdmin]);
+
+  // Verificar estado de autenticación con el backend
+  const checkAuthStatus = () => {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setIsLoggedIn(false);
+      setIsAdmin(false);
+      return;
+    }
+
+    const headers = { Authorization: `Bearer ${token}` };
+
+    axios.get('http://localhost:3000/auth', { headers })
+      .then(response => {
+        setIsLoggedIn(true);
+        setIsAdmin(response.data.admin === 1);
+      })
+      .catch(() => {
+        setIsLoggedIn(false);
+        setIsAdmin(false);
+      });
+  };
+
+  // Navegar a la página de colores
+  const goToColors = () => {
+    navigate('/colors');
+  };
+
+  // Navegar a la página de fuentes
+  const goToFonts = () => {
+    navigate('/fonts');
+  };
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <section className="hero-section" style={{ background: colors[1] }}>
+      <div className="hero-content" style={{ background: colors[3], color: colors[0] }}>
+        <main className="hero-title">
+          <h1 className="inline" 
+              style={{
+                fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+                fontSize: `${sizes.title}px`
+              }}>
+            <span className="highlight-primary" style={{ color: colors[2], background: colors[1] }}>
+              ColorFonts
+            </span>
+            interactua
+          </h1>
+          <h2 className="inline"
+              style={{
+                fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                fontSize: `${sizes.subtitle}px`
+              }}>
+            <span className="highlight-secondary" style={{ color: colors[1], background: colors[2] }}>
+              assets
+            </span>
+            con nosotros
+          </h2>
+        </main>
+
+        <p className="hero-description" 
+           style={{
+             color: colors[0], 
+             background: colors[1],
+             fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+             fontSize: `${sizes.paragraph}px`
+           }}>
+          interactua con tu app de react los colores y fuentes que quieras
+        </p>
+
+        <div className="hero-buttons">
+          {/* Botones que solo se muestran si el usuario está logueado y es admin */}
+          {isLoggedIn && isAdmin && (
+            <div className="admin-buttons">
+              <button
+                className="btn btn-primary"
+                style={{
+                  background: colors[2],
+                  color: colors[1],
+                  borderColor: colors[0],
+                  fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                  fontSize: `${sizes.paragraph}px`
+                }}
+                onClick={goToColors}>
+                Go to Colors
+              </button>
+              <button
+                className="btn btn-secondary"
+                style={{
+                  background: colors[1],
+                  color: colors[2],
+                  borderColor: colors[2],
+                  fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                  fontSize: `${sizes.paragraph}px`
+                }}
+                onClick={goToFonts}>
+                Go to Fonts
+                <svg className="icon" width="20" height="20" viewBox="0 0 15 15" fill="none">
+                  <path d="M7.5 0.875C5.49797 0.875 3.875 2.49797 3.875 4.5C3.875 6.15288 4.98124 7.54738 6.49373 7.98351C5.2997 8.12901 4.27557 8.55134 3.50407 9.31167C2.52216 10.2794 2.02502 11.72 2.02502 13.5999C2.02502 13.7823 2.04227 13.9625 2.07507 14.1395C2.08574 14.1941 2.13444 14.2382 2.19054 14.2489C2.24664 14.2596 2.30274 14.2109 2.31341 14.1563C2.34342 13.9951 2.36067 13.8286 2.36067 13.6599C2.36067 11.8796 2.98288 10.7206 3.66852 9.95229C4.3134 9.22635 5.21838 8.875 6.49995 8.875C7.78152 8.875 8.6865 9.22635 9.33138 9.95229C10.017 10.7206 10.6392 11.8796 10.6392 13.6599C10.6392 13.8286 10.6565 13.9951 10.6865 14.1563C10.6972 14.2109 10.7533 14.2596 10.8094 14.2489C10.8655 14.2382 10.9142 14.1941 10.9248 14.1395C10.9576 13.9625 10.9749 13.7823 10.9749 13.5999C10.9749 11.72 10.4777 10.2794 9.4958 9.31167C8.7243 8.55135 7.70025 8.12903 6.50625 7.98352C8.01875 7.5474 9.125 6.15289 9.125 4.5C9.125 2.49797 7.50203 0.875 7.5 0.875ZM6.49995 1.875C7.03888 1.875 7.4749 2.31102 7.4749 2.85C7.4749 3.38898 7.03888 3.825 6.49995 3.825C5.96102 3.825 5.525 3.38898 5.525 2.85C5.525 2.31102 5.96102 1.875 6.49995 1.875ZM2.09935 5.02179C2.0583 4.97955 1.99638 4.97089 1.94566 5.00021C1.89494 5.02953 1.86519 5.09225 1.87868 5.15108C2.19733 6.44357 3.25406 7.41206 4.58775 7.69076C4.63033 7.7007 4.67367 7.67147 4.68315 7.62899C4.69263 7.58651 4.6634 7.54317 4.62092 7.53369C3.42012 7.28239 2.46957 6.45919 2.18946 5.27089C2.17931 5.22691 2.14113 5.19681 2.09935 5.02179ZM12.9006 5.02179C12.8588 5.19681 12.8206 5.22691 12.8105 5.27089C12.5304 6.45919 11.5798 7.28239 10.379 7.53369C10.3366 7.54317 10.3073 7.58651 10.3168 7.62899C10.3263 7.67147 10.3696 7.7007 10.4122 7.69076C11.7459 7.41206 12.8026 6.44357 13.1213 5.15108C13.1348 5.09225 13.105 5.02953 13.0543 5.00021C13.0036 4.97089 12.9417 4.97955 12.9006 5.02179ZM9.00035 9.88929C8.81124 9.91496 8.63923 10.0104 8.52147 10.1596C8.40371 10.3088 8.34805 10.5 8.36626 10.6896C8.38447 10.8792 8.47492 11.0509 8.61653 11.1749C8.75814 11.2989 8.94009 11.3678 9.1264 11.3678C9.31272 11.3678 9.49467 11.2989 9.63628 11.1749C9.77789 11.0509 9.86834 10.8792 9.88655 10.6896C9.90476 10.5 9.8491 10.3088 9.73134 10.1596C9.61358 10.0104 9.44157 9.91496 9.25245 9.88929C9.20925 9.8833 9.04345 9.8833 9.00035 9.88929Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="hero-cards">
+        <HeroCards />
+      </div>
+
+      <div className="shadow"></div>
+    </section>
+  );
+};
+
+export default Hero;

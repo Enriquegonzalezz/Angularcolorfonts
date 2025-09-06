@@ -1,0 +1,751 @@
+@charset "UTF-8";
+@keyframes positions {}
+ @keyframes large_first_animation {
+  0% {
+    transform: translateY(150px);
+  }
+   8% {
+    transform: translateY(150px);
+
+  }
+  
+  16% {
+      transform: translateY(400px) translateX(-100px) rotateZ(45deg) rotateX(180deg);
+
+  }
+  33% {
+      transform: translateY(380px) translateX(-100px) rotateZ(45deg) rotateX(180deg);
+
+  }
+  50% {
+    transform: translateY(380px) translateX(-200px) rotateZ(45deg) rotateX(180deg);
+  }
+  58% {
+    transform: translateY(380px) translateX(-200px) rotateZ(45deg) rotateX(180deg);
+  }
+  
+  66% {
+      transform: translateY(5px) translateX(-60px) rotateZ(45deg) rotateX(180deg);
+
+  }
+  75% {
+    transform: translateY(5px) translateX(-60px) rotateZ(45deg) rotateX(180deg);
+  }
+  83% {
+    transform: translateY(5px) translateX(-60px) rotateZ(45deg) rotateX(180deg);
+  }
+  91% {
+    transform: translateY(150px);
+  }  
+  100% {
+    transform: translateY(150px);
+  }
+} 
+@keyframes large_second_animation {
+  0% {
+    transform: rotateZ(90deg) translateX(75px) translateY(73px);
+  }
+  8% {
+    transform: rotateZ(90deg) translateX(75px) translateY(73px) translateZ(-100px);
+  }
+  16% {
+      transform: rotateZ(90deg) translateX(180px) translateY(-100px) translateZ(-100px) ;
+
+  }
+  33% {
+      transform: rotateZ(90deg) rotateX(180deg) translateX(180px) translateY(-100px);
+
+  }
+    41% {
+      transform: rotateZ(135deg) translateX(162px) translateY(-375px) translateZ(200px);
+
+  }
+  50% {
+      transform: rotateZ(135deg) translateX(162px) translateY(-375px);
+
+  }
+  58% {
+      transform: rotateZ(135deg) translateX(162px) translateY(-375px);
+
+  }
+  66% {
+      transform: rotateZ(45deg) translateX(-39px) translateY(-131px) translateZ(200px);
+
+  }
+  75% {
+      transform: rotateZ(45deg) translateX(-39px) translateY(-131px);
+
+  }
+  83% {
+      transform: rotateZ(45deg) translateX(-39px) translateY(-131px);
+
+  }
+  91% {
+        transform: rotateZ(90deg) translateX(0px) translateY(73px) translateZ(200px);
+
+  }   
+  100% {
+    transform: rotateZ(90deg) translateX(75px) translateY(73px);
+  }
+}
+
+
+@keyframes triangle_second_frames {
+  0% {
+    transform: rotateZ(270deg) translateX(-315px) translateY(236px);
+  }
+  8% {
+    transform: rotateZ(270deg) translateX(-315px) translateY(236px) translateZ(300px);
+  }
+   16% {
+      transform: rotateZ(270deg) translateX(-512px) translateY(50px) translateZ(300px);
+
+  }
+  33% {
+      transform: rotateZ(270deg) translateX(-512px) translateY(50px);
+
+  }
+   41% {
+      transform: rotateZ(180deg) translateX(50px) translateY(-782px) translateZ(120px);
+
+  }
+  50% {
+      transform: rotateZ(180deg) translateX(50px) translateY(-782px);
+
+  }
+  58% {
+      transform: rotateZ(180deg) translateX(50px) translateY(-782px);
+
+  } 
+  66% {
+    transform: rotateZ(45deg) rotateX(180deg) translateX(-68px) translateY(-340px) translateZ(320px);
+  }
+  75% {
+    transform: rotateZ(45deg) rotateX(180deg) translateX(-68px) translateY(-340px);
+  }
+  83% {
+    transform: rotateZ(45deg) rotateX(180deg) translateX(-68px) translateY(-340px);
+  }
+  91% {
+        transform: rotateZ(270deg) translateX(-315px) translateY(236px) translateZ(-300px);
+
+  }  
+  100% {
+    transform: rotateZ(270deg) translateX(-315px) translateY(236px);
+  }
+}
+
+@keyframes double_frames {
+  0% {
+    transform: rotateZ(45.5deg) translateX(75px) translateY(-175px);
+  }
+  8% {
+    transform: rotateZ(45.5deg) translateX(75px) translateY(-175px) translateZ(-200px);
+  }
+   16% {
+      transform: rotateZ(270deg) translateX(135px) translateY(-106px) translateZ(-200px);
+
+  }
+  33% {
+      transform: rotateZ(270deg) translateX(135px) translateY(-106px);
+
+  }
+    41% {
+      transform: rotateZ(180deg) translateX(30px) translateY(-187px);
+
+  }
+  50% {
+      transform: rotateZ(180deg) translateX(30px) translateY(-187px);
+
+  }
+  58% {
+      transform: rotateZ(180deg) translateX(30px) translateY(-187px);
+
+  }
+  66% {
+      transform: rotateZ(0deg) translateX(0px) translateY(410px) translateZ(70px);
+
+  }
+  75% {
+      transform: rotateZ(0deg) translateX(0px) translateY(410px);
+
+  }
+  83% {
+      transform: rotateZ(0deg) translateX(0px) translateY(410px);
+
+  }
+  91% {
+        transform: rotateZ(45.5deg) translateX(75px) translateY(-175px) translateZ(200px);
+
+  }  
+  100% {
+    transform: rotateZ(45.5deg) translateX(75px) translateY(-175px);
+  }
+}
+
+@keyframes cube_frames {
+  0% {
+    transform: rotateZ(45deg) translateX(220px) translateY(-5px);
+  }
+  8% {
+    transform: rotateZ(45deg) translateX(220px) translateY(-5px) translateZ(200px);
+  }
+   16% {
+      transform: translateX(90px) translateY(40px) translateZ(200px);
+
+  }
+  33% {
+      transform: translateX(90px) translateY(40px);
+
+  }
+   41% {
+      transform: translateX(-50px) translateY(530px) scale(1.4) translateZ(-240px);
+
+  }
+  50% {
+      transform: translateX(-50px) translateY(530px) scale(1.4);
+
+  }
+  58% {
+      transform: translateX(-50px) translateY(530px) scale(1.4);
+
+  }
+  66% {
+      transform: translateX(0px) translateY(360px) translateZ(500px);
+
+  }
+  75% {
+      transform: translateX(0px) translateY(360px);
+
+  }
+  83% {
+      transform: translateX(0px) translateY(360px);
+
+  }
+  91% {
+    transform: rotateZ(45deg) translateX(220px) translateY(-5px) translateZ(-200px);
+  }  
+  100% {
+    transform: rotateZ(45deg) translateX(220px) translateY(-5px);
+  }
+}
+  
+@keyframes triangle_first_frames {
+  0% {
+    transform: rotateZ(180deg) translateX(0px) translateY(-75px);
+  }
+  8% {
+    transform: rotateZ(180deg) translateX(0px) translateY(-75px) translateZ(100px);
+  }
+   16% {
+      transform: rotateZ(90deg) translateX(350px) translateY(-63px) translateZ(100px);
+
+  }
+   33% {
+      transform: rotateZ(90deg) translateX(350px) translateY(-63px);
+
+  }
+  
+   41% {
+      transform: rotateZ(180deg) translateX(50px) translateY(-958px) translateZ(-110px);
+
+  }
+  50% {
+      transform: rotateZ(180deg) translateX(50px) translateY(-958px);
+
+  }
+  58% {
+  transform: rotateZ(180deg) translateX(50px) translateY(-958px);
+    
+  }
+  66% {
+      transform: rotateZ(45deg) translateX(92px) translateY(330px) translateZ(210px);
+
+  }
+  75% {
+      transform: rotateZ(45deg) translateX(92px) translateY(330px);
+
+  }
+  83% {
+      transform: rotateZ(45deg) translateX(92px) translateY(330px);
+
+  }
+  91% {
+    transform: rotateZ(180deg) translateX(0px) translateY(-75px) translateZ(-100px);
+  }  
+  100% {
+    transform: rotateZ(180deg) translateX(0px) translateY(-75px);
+  }
+}
+
+@keyframes paralelogram_frames {
+  0% {
+    transform: rotateX(180deg) translateX(-160px) translateY(88px);
+  }
+  8% {
+    transform: rotateX(180deg) translateX(-160px) translateY(88px) translateZ(-300px);
+  }
+   16% {
+    transform: rotateX(180deg) rotateZ(-120deg) translateX(-375px) translateY(15px) translateZ(-300px);
+  }
+  33% {
+    transform: rotateX(180deg) rotateZ(-120deg) translateX(-375px) translateY(15px);
+  }
+   41% {
+    transform: rotateX(180deg) rotateZ(-80deg) translateX(-192px) translateY(15px);
+  }
+  50% {
+    transform: rotateX(180deg) rotateZ(-80deg) translateX(-192px) translateY(15px);
+  }
+  58% {
+    transform: rotateX(180deg) rotateZ(-80deg) translateX(-192px) translateY(15px);
+  }
+  70% {
+      transform: rotateZ(135deg) translateX(-70px) translateY(-340px) translateZ(400px);
+
+  }
+  75% {
+      transform: rotateZ(135deg) translateX(-70px) translateY(-340px);
+
+  }
+  83% {
+      transform: rotateZ(135deg) translateX(-70px) translateY(-340px);
+
+  }
+  91% {
+    transform: rotateX(180deg) translateX(-160px) translateY(88px) translateZ(300px);
+  }   
+  100% {
+    transform: rotateX(180deg) translateX(-160px) translateY(88px);
+  } 
+} 
+.absolute {
+  position: absolute;
+}
+
+.top-0 {
+  top: 0;
+}
+/*  aqui es la parte de tamaños y colores del primer triangulo chiquito el que es verde mas obscuro*/
+.triangle-container-first {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: triangle_first_frames 15s infinite;
+  transform: rotateZ(45deg) translateX(92px) translateY(330px);
+}
+.triangle-container-first .triangle,
+.triangle-container-first .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.triangle-container-first .triangle {
+  translate: 0px 0px 30px;
+  background-color: #38999e;
+}
+.triangle-container-first .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #38999e;
+}
+.triangle-container-first .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.triangle-container-first .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.triangle-container-first .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.triangle-container-first .triangle {
+  border-color: transparent transparent #38999e transparent;
+}
+.triangle-container-first .triangle-back {
+  border-color: transparent transparent #38999e transparent;
+}
+.triangle-container-first .edge1, .triangle-container-first .edge2, .triangle-container-first .edge3 {
+  background-color: #23626e;
+}
+/*  aqui es la parte de tamaños y colores del primer triangulo chiquito el que esmorado */
+
+.triangle-container-second {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  transform-style: preserve-3d;
+  animation: triangle_second_frames 15s infinite;
+  transform: rotateZ(45deg) rotateX(180deg) translateX(-68px) translateY(-340px);
+}
+.triangle-container-second .triangle,
+.triangle-container-second .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.triangle-container-second .triangle {
+  translate: 0px 0px 30px;
+  background-color: #CC8EC6;
+}
+.triangle-container-second .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #CC8EC6;
+}
+.triangle-container-second .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.triangle-container-second .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.triangle-container-second .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.triangle-container-second .triangle {
+  border-color: transparent transparent #CC8EC6 transparent;
+}
+.triangle-container-second .triangle-back {
+  border-color: transparent transparent #CC8EC6 transparent;
+}
+.triangle-container-second .edge1, .triangle-container-second .edge2, .triangle-container-second .edge3 {
+  background-color: #c882bb;
+}
+/*  aqui es la parte de tamaños y colores del cubo rosado */
+
+.cube-container {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  animation: cube_frames 15s infinite;
+  transform: translateX(0px) translateY(360px);
+}
+.cube-container .cube,
+.cube-container .cube-back {
+  width: 226.27px;
+  height: 226.27px;
+  background: #E6E6FA;
+  clip-path: inset(0);
+}
+.cube-container .cube {
+  translate: 0px 0px 30px;
+}
+.cube-container .cube-back {
+  translate: 0px 0px -30px;
+}
+.cube-container .edge1 {
+  width: 226.27px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.cube-container .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 0px -256.27px 0px;
+  rotate: 1 0 0 90deg;
+}
+.cube-container .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: 113.13px -143.13px 0px;
+  transform: rotateY(90deg) rotateZ(90deg);
+}
+.cube-container .edge4 {
+  width: 226.27px;
+  height: 60px;
+  translate: -113.13px -143.13px 0px;
+  transform: rotateY(90deg) rotateZ(90deg);
+}
+.cube-container .cube {
+  background-color: #E6E6FA;;
+}
+.cube-container .cube-back {
+  background-color: #E6E6FA;;
+}
+.cube-container .edge1, .cube-container .edge2, .cube-container .edge3, .cube-container .edge4 {
+  background-color: #c796db;
+}
+/*  aqui es la parte de tamaños y colores del amarillo*/
+
+
+.paralelogram-container {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  animation: paralelogram_frames 15s infinite;
+  transform: rotateZ(135deg) translateX(-70px) translateY(-340px);
+}
+.paralelogram-container .p-second {
+  translate: -163px 15px 0px;
+  rotate: 0 0 1 180deg;
+}
+.paralelogram-container .paralelogram-part {
+  display: inline-block;
+  transform-style: preserve-3d;
+}
+.paralelogram-container .paralelogram-part .triangle,
+.paralelogram-container .paralelogram-part .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.paralelogram-container .paralelogram-part .triangle {
+  translate: 0px 0px 30px;
+  background-color: #FFFF99;
+}
+.paralelogram-container .paralelogram-part .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #FFFF99;
+}
+.paralelogram-container .paralelogram-part .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.paralelogram-container .paralelogram-part .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.paralelogram-container .paralelogram-part .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.paralelogram-container .paralelogram-part .triangle {
+  border-color: transparent transparent #FFFF99 transparent;
+}
+.paralelogram-container .paralelogram-part .triangle-back {
+  border-color: transparent transparent #FFFF99 transparent;
+}
+.paralelogram-container .paralelogram-part .edge1, .paralelogram-container .paralelogram-part .edge2, .paralelogram-container .paralelogram-part .edge3 {
+  background-color: #d0cb63;
+}
+/*  aqui es la parte de tamaños y colores del triangulo mediano verde*/
+
+.double-container {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  transform-style: preserve-3d;
+  scale: 1.41;
+  animation: double_frames 15s infinite;
+  transform: rotateZ(0deg) translateX(0px) translateY(410px);
+  
+}
+.double-container .triangle,
+.double-container .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.double-container .triangle {
+  translate: 0px 0px 30px;
+  background-color: #98FB98;
+}
+.double-container .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #98FB98;
+}
+.double-container .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.double-container .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.double-container .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.double-container .triangle {
+  border-color: transparent transparent #98FB98 transparent;
+}
+.double-container .triangle-back {
+  border-color: transparent transparent #98FB98 transparent;
+}
+.double-container .edge1, .double-container .edge2, .double-container .edge3 {
+  background-color: #65d097;
+}
+/*  aqui es la parte de tamaños y colores del triangulo grande rosado */
+
+
+.large-container-first {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  transform-style: preserve-3d;
+  scale: 2;
+  animation: large_first_animation 15s infinite;
+  transform: translateY(5px) translateX(-60px) rotateZ(45deg) rotateX(180deg);
+}
+.large-container-first .triangle,
+.large-container-first .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.large-container-first .triangle {
+  translate: 0px 0px 30px;
+  background-color: #FFC0CB;
+}
+.large-container-first .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #FFC0CB
+}
+.large-container-first .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.large-container-first .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.large-container-first .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.large-container-first .triangle {
+  border-color: transparent transparent #FFC0CB transparent;
+}
+.large-container-first .triangle-back {
+  border-color: transparent transparent #FFC0CB transparent;
+}
+.large-container-first .edge1, .large-container-first .edge2, .large-container-first .edge3 {
+  background-color: #ab6da4;
+}
+/*  aqui es la parte de tamaños y colores del triangulo grande azul*/
+
+.large-container-second {
+  transform-style: preserve-3d;
+  display: inline-block;
+  position: absolute;
+  transform-style: preserve-3d;
+  scale: 2;
+  animation: large_second_animation 15s infinite;
+  transform: rotateZ(45deg) translateX(-39px) translateY(-131px);
+}
+.large-container-second .triangle,
+.large-container-second .triangle-back {
+  width: 322px;
+  height: 175.5px;
+  background: transparent;
+  clip-path: polygon(50% 8.5%, 0% 100%, 100% 100%);
+}
+.large-container-second .triangle {
+  translate: 0px 0px 30px;
+  background-color: #87CEEB;
+}
+.large-container-second .triangle-back {
+  translate: 0px 0px -30px;
+  background-color: #87CEEB;
+}
+.large-container-second .edge1 {
+  width: 320px;
+  height: 60px;
+  translate: 0px -30px 0px;
+  rotate: 1 0 0 90deg;
+}
+.large-container-second .edge2 {
+  width: 226.27px;
+  height: 60px;
+  translate: 127.5px -110px 0px;
+  transform: rotateX(90deg) rotateY(45deg);
+}
+.large-container-second .edge3 {
+  width: 226.27px;
+  height: 60px;
+  translate: -33px -110px 0px;
+  transform: rotateX(90deg) rotateY(-45deg);
+}
+.large-container-second .triangle {
+  border-color: transparent transparent #87CEEB transparent;
+}
+.large-container-second .triangle-back {
+  border-color: transparent transparent #87CEEB transparent;
+}
+.large-container-second .edge1, .large-container-second .edge2, .large-container-second .edge3 {
+  background-color: #4283a9;
+}
+
+.perspective-container {
+  height: 400px;
+  transform-style: preserve-3d;
+  perspective: 10000px;
+  scale: 0.5;
+  animation: left-right 30s ease-in-out infinite;
+  display: flex; /* Añadido para centrar como en tu HTML original con flex */
+  justify-content: center; /* Añadido para centrar */
+  align-items: center; /* Añadido para centrar */
+  /* transform: rotateX(20deg) rotateY(-45deg); */
+}
+
+@keyframes left-right {
+  0% {
+    transform: rotateY(-45deg) rotateX(20deg);
+  }
+  25% {
+    transform: rotateY(45deg) rotateX(20deg);
+  }
+  50% {
+    transform: rotateY(-45deg) rotateX(-20deg);
+  }
+  75% {
+    transform: rotateY(45deg) rotateX(-20deg);
+  }
+  100% {
+    transform: rotateY(-45deg) rotateX(20deg);
+  }
+}
+@keyframes girar {
+  0% {
+    transform: none;
+  }
+  33% {
+    transform: rotateX(360deg);
+  }
+  66% {
+    transform: rotateX(360deg) rotateY(360deg);
+  }
+  100% {
+    transform: rotateX(360deg) rotateY(360deg) rotateZ(360deg);
+  }
+}

@@ -258,6 +258,13 @@ export class ImageUpload implements OnInit {
         
         // Actualizar metadatos con los datos de la imagen RECORTADA
         this.imageSize = this.imageFile.size;
+        
+        // Guardar la URL de la imagen original antes de actualizarla
+        if (!this.originalImagePreview) {
+          this.originalImagePreview = this.imagePreview;
+        }
+        
+        // Actualizar la vista previa con la imagen recortada
         this.imagePreview = canvas.toDataURL('image/jpeg', 0.9);
         this.imageWidth = canvas.width;  // Dimensiones de la imagen recortada
         this.imageHeight = canvas.height; // Dimensiones de la imagen recortada
@@ -291,9 +298,13 @@ export class ImageUpload implements OnInit {
         
         this.cropper = null;
         this.isCropping = false;
-        this.cdr.detectChanges();
         
-      }, 'image/jpeg', 0.9); // 90% quality
+        // Forzar actualización de la vista
+        setTimeout(() => {
+          this.cdr.detectChanges();
+        }, 100);
+        
+      }, 'image/jpeg', 0.95); // 95% quality para mejor calidad
       
     } catch (error) {
       console.error('Error applying crop:', error);

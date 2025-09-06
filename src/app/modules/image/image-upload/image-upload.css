@@ -236,39 +236,97 @@
 
 /* Cropping Section */
 .cropping-section {
-  background-color: white;
+  background-color: #1f2937;
   border-radius: 1rem;
   padding: 2rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  color: white;
   margin-bottom: 2rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
 }
 
 .cropping-section h2 {
   margin-bottom: 1.5rem;
-  color: #1f2937;
   font-size: 1.5rem;
   font-weight: 600;
+  text-align: center;
+  color: #f3f4f6;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
 .cropper-container {
-  margin-bottom: 1.5rem;
+  max-width: 100%;
+  margin-bottom: 2rem;
+  background-color: #111827;
   border-radius: 0.5rem;
   overflow: hidden;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-}
-
-.cropper-container img {
-  max-width: 100%;
-  display: block;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .cropper-instructions {
-  background-color: #f3f4f6;
+  margin-bottom: 1.5rem;
   padding: 1rem;
+  background-color: rgba(0, 0, 0, 0.2);
   border-radius: 0.5rem;
+  border-left: 4px solid #3b82f6;
+}
+
+.cropper-instructions h4 {
+  margin-bottom: 0.75rem;
+  color: #f3f4f6;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.crop-instructions-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.crop-instructions-list li {
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  border-radius: 0.25rem;
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.crop-instructions-list li i {
+  margin-right: 0.5rem;
+  color: #3b82f6;
+}
+
+.crop-instructions-list li strong {
+  margin-right: 0.5rem;
+  color: #f3f4f6;
+}
+
+.crop-preview-info {
   margin-bottom: 1.5rem;
   text-align: center;
-  color: #6b7280;
+}
+
+.crop-dimensions {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  background-color: #3b82f6;
+  color: white;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dimension-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+.dimension-badge::before {
+  content: '📏';
+  margin-right: 0.5rem;
 }
 
 /* Action Buttons */

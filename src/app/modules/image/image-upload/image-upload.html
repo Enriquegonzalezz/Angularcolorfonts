@@ -114,12 +114,25 @@
       </div>
       
       <div class="cropper-instructions">
-        <p>Arrastra y redimensiona el área de recorte. Haz doble clic para cambiar entre modo de movimiento y recorte.</p>
+        <h4>Instrucciones de Recorte:</h4>
+        <ul class="crop-instructions-list">
+          <li><i class="fas fa-arrows-alt"></i> <strong>Mover imagen:</strong> Arrastra dentro del área de recorte</li>
+          <li><i class="fas fa-expand-arrows-alt"></i> <strong>Redimensionar:</strong> Arrastra los bordes o esquinas</li>
+          <li><i class="fas fa-crop-alt"></i> <strong>Ajustar área:</strong> Mueve el marco de recorte</li>
+        </ul>
+      </div>
+      
+      <div class="crop-preview-info">
+        @if (cropData) {
+          <div class="crop-dimensions">
+            <span class="dimension-badge">{{ cropData.width | number:'1.0-0' }} x {{ cropData.height | number:'1.0-0' }} px</span>
+          </div>
+        }
       </div>
       
       <div class="action-buttons">
-        <button (click)="applyCrop()" class="btn btn-primary">Aplicar Recorte</button>
-        <button (click)="cancelCrop()" class="btn btn-danger">Cancelar</button>
+        <button (click)="applyCrop()" class="btn btn-primary"><i class="fas fa-check"></i> Aplicar Recorte</button>
+        <button (click)="cancelCrop()" class="btn btn-danger"><i class="fas fa-times"></i> Cancelar</button>
       </div>
     </div>
   }
