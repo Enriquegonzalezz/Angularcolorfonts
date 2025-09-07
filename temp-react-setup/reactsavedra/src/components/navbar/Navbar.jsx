@@ -185,17 +185,33 @@ const Navbar = () => {
           ))}
           
           {isLoggedIn && (
-            <Link
-              to="/formulario"
-              className="nav-link"
-              style={{
-                color: colors[0],
-                fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
-                fontSize: `${sizes.paragraph}px`
-              }}
-            >
-              Formulario
-            </Link>
+            <>
+              <Link
+                to="/formulario"
+                className="nav-link"
+                style={{
+                  color: colors[0],
+                  fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                  fontSize: `${sizes.paragraph}px`
+                }}
+              >
+                Formulario
+              </Link>
+              
+              {isLoggedIn && (
+                <Link
+                  to="/datatable"
+                  className="nav-link"
+                  style={{
+                    color: colors[0],
+                    fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                    fontSize: `${sizes.paragraph}px`
+                  }}
+                >
+                  Datatable
+                </Link>
+              )}
+            </>
           )}
           
           {isLoggedIn && isAdmin && (

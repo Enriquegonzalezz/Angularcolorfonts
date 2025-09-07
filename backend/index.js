@@ -6,7 +6,17 @@ const { createFontsRouter } = require("./Modules/Fonts/fontsRoutes");
 const {createVideosRouter} = require('./Modules/Videos/videosRoutes');
 const {createImagesRouter} = require('./Modules/Images/imagesRoutes');
 require('dotenv/config');
-const sequelize = require("./db/database");
+
+// Try to use MySQL connection first, fallback to SQLite if MySQL fails
+let sequelize;
+try {
+  sequelize = require("./db/database");
+  console.log('Using MySQL database connection');
+} catch (error) {
+  console.log('MySQL connection failed, falling back to SQLite');
+  sequelize = require("./db/database_sqlite");
+}
+
 const cors = require('cors');
 const app = express();
 const path = require('path');
@@ -39,7 +49,7 @@ try {
   sequelize.authenticate()
     .then(() => {
       console.log('Database connection has been established successfully.');
-      return sequelize.sync();
+      return sequelize.sync({});
     })
     .then(() => {
       console.log('Database synchronized successfully.');

@@ -54,11 +54,7 @@ function App() {
               <Route path="/colors" element={<Colors />} />
               <Route path="/fonts" element={<Fonts />} />
               <Route path="/formulario" element={<Formulario />} />
-              <Route path="/usuarios" element={
-                <AdminRoute>
-                  <Datatable />
-                </AdminRoute>
-              } />
+              <Route path="/datatable" element={<Datatable />} />
               <Route path="/upload/image" element={
                 <AdminRoute>
                   <ImageUpload />
