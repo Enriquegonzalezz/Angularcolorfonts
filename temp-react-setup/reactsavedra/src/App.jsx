@@ -56,19 +56,19 @@ function App() {
               <Route path="/formulario" element={<Formulario />} />
               <Route path="/datatable" element={<Datatable />} />
               <Route path="/upload/image" element={
-                <AdminRoute>
+            
                   <ImageUpload />
-                </AdminRoute>
+              
               } />
               <Route path="/upload/video" element={
-                <AdminRoute>
+            
                   <VideoUpload />
-                </AdminRoute>
+              
               } />
               <Route path="/media" element={
-                <AdminRoute>
+            
                   <MediaCarousel />
-                </AdminRoute>
+              
               } />
               <Route path="/tangram" element={<Tangram />} />
               <Route path="*" element={<Navigate to="/" replace />} />
