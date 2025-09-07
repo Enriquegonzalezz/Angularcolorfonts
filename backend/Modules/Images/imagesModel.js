@@ -147,4 +147,4 @@ class ImagesModel {
   }
 }
 
-module.exports = ImagesModel;
+module.exports = {ImagesModel};

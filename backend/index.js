@@ -3,12 +3,15 @@ const { PORT } = require("./config");
 const { createUsersRouter } = require("./Modules/Users/usersRoutes");
 const { createColorsRouter } = require("./Modules/Colors/colorsRoutes");
 const { createFontsRouter } = require("./Modules/Fonts/fontsRoutes");
+const {createVideosRouter} = require('./Modules/Videos/videosRoutes');
+const {createImagesRouter} = require('./Modules/Images/imagesRoutes');
 require('dotenv/config');
 const sequelize = require("./db/database");
 const cors = require('cors');
 const app = express();
 const path = require('path');
 const fs = require('fs');
+const { create } = require('domain');
 
 app.use(cors());
 app.use(express.json());
@@ -53,8 +56,8 @@ try {
 app.use("/", createUsersRouter());
 app.use("/colors", createColorsRouter());
 app.use("/fonts", createFontsRouter());
-app.use("/images", require('./Modules/Images/routes'));
-app.use("/videos", require('./Modules/Videos/routes'));
+app.use("/images", createImagesRouter());
+app.use("/videos", createVideosRouter());
 
 console.log({
   host: process.env.DB_HOST,

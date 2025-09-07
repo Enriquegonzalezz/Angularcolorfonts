@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../services/AuthContext';
 import './Colors.css';
+import { useStyles } from '../../services/StyleContext';
 
 // Definición de tipos
 const initialColors = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
 
 const Colors = () => {
+  const { fetchDefaultColors, fetchDefaultFonts } = useStyles();
   const [colors, setColors] = useState(initialColors);
   const [savedColors, setSavedColors] = useState([]);
   const [defaultColorId, setDefaultColorId] = useState(null);
@@ -30,7 +32,7 @@ const Colors = () => {
 
   // Obtener colores guardados
   const fetchColors = () => {
-    if (!checkAuth()) return;
+    //if (!checkAuth()) return;
 
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
@@ -178,21 +180,21 @@ const Colors = () => {
   };
 
   // Establecer color predeterminado
-  const handleToggleDefault = (colorId) => {
-    if (!checkAuth()) return;
+  const handleToggleDefault = async (colorId) => {
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers = { Authorization: `Bearer ${token}` };
 
-    const token = localStorage.getItem('access_token');
-    const headers = { Authorization: `Bearer ${token}` };
-    
-    axios.put(`http://localhost:3000/colors/update/predeterminado/${colorId}`, {}, { headers })
-      .then(() => {
-        console.log('Predeterminado actualizado exitosamente');
-        fetchColors(); // Refrescar la lista
-      })
-      .catch(error => {
-        console.error('Error al actualizar el predeterminado:', error);
-        navigate('/login');
-      });
+      await axios.put(`http://localhost:3000/colors/update/predeterminado/${colorId}`, {}, { headers });
+      
+      console.log('Predeterminado actualizado exitosamente');
+      await fetchDefaultColors();
+      await fetchDefaultFonts();
+      fetchColors(); 
+    } catch (error) {
+      console.error('Error al actualizar el predeterminado:', error);
+      navigate('/login');
+    }
   };
 
   // Resetear formulario

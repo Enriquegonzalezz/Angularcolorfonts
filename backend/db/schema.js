@@ -275,6 +275,14 @@ Videos.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+    nombre_original: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    nombre_archivo: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
     tamano: {
         type: DataTypes.STRING,
         allowNull: false
