@@ -137,6 +137,12 @@ const VideoUpload = () => {
     if (input.files && input.files.length > 0) {
       const audioFile = input.files[0];
       
+      // Verificar si el archivo de audio es compatible
+      if (!audioFile.type.startsWith('audio/')) {
+        alert('Por favor, seleccione un archivo de audio válido');
+        return;
+      }
+      
       setAudioTracks(prevTracks => {
         return prevTracks.map(track => {
           if (track.language === language) {
@@ -148,29 +154,61 @@ const VideoUpload = () => {
             return {
               ...track,
               file: audioFile,
-              mimeType: audioFile.type
+              mimeType: audioFile.type,
+              name: audioFile.name,
+              size: audioFile.size
             };
           }
           return track;
         });
       });
+      
+      // Procesar inmediatamente el audio para verificar compatibilidad
+      setTimeout(() => processAudioTrack(language), 100);
     }
   };
   
   // Procesar pista de audio
   const processAudioTrack = (language) => {
-    setAudioTracks(prevTracks => {
-      return prevTracks.map(track => {
-        if (track.language === language && track.file) {
-          // Crear URL de blob para el archivo de audio
-          return {
-            ...track,
-            url: URL.createObjectURL(track.file)
-          };
-        }
-        return track;
+    const track = audioTracks.find(t => t.language === language && t.file);
+    
+    if (!track || !track.file) return;
+    
+    // Crear un elemento de audio para verificar duración
+    const audioElement = new Audio();
+    const audioUrl = URL.createObjectURL(track.file);
+    
+    audioElement.onloadedmetadata = () => {
+      const audioDuration = audioElement.duration;
+      
+      // Comparar con la duración del video
+      if (videoDuration > 0 && Math.abs(audioDuration - videoDuration) > 5) {
+        // Mostrar advertencia si la diferencia es mayor a 5 segundos
+        alert(`Advertencia: La duración del audio (${formatTime(audioDuration)}) es diferente a la del video (${formatTime(videoDuration)}). El audio se reproducirá durante todo el video.`);
+      }
+      
+      // Actualizar el estado con la URL y duración
+      setAudioTracks(prevTracks => {
+        return prevTracks.map(t => {
+          if (t.language === language) {
+            return {
+              ...t,
+              url: audioUrl,
+              duration: audioDuration
+            };
+          }
+          return t;
+        });
       });
-    });
+    };
+    
+    audioElement.onerror = () => {
+      alert(`Error al procesar el archivo de audio: ${track.name}`);
+      URL.revokeObjectURL(audioUrl);
+    };
+    
+    // Cargar el audio para obtener metadatos
+    audioElement.src = audioUrl;
   };
   
   // Alternar reproducción/pausa
@@ -185,76 +223,154 @@ const VideoUpload = () => {
     }
   };
   
-  // Editar subtítulos
-  const editSubtitle = (language) => {
-    const subtitle = subtitles.find(sub => sub.language === language);
-    if (subtitle) {
-      // Crear una copia profunda para evitar modificar el original hasta guardar
-      setCurrentSubtitle({
-        ...subtitle,
-        entries: subtitle.entries.map(entry => ({ ...entry }))
-      });
-      setEditingSubtitle(true);
-    }
-  };
+  // Activar/desactivar subtítulos
+  const [activeSubtitles, setActiveSubtitles] = useState({
+    en: true,  // Inglés activado por defecto
+    es: false  // Español desactivado por defecto
+  });
   
-  // Añadir entrada de subtítulo
-  const addSubtitleEntry = () => {
-    if (currentSubtitle) {
-      setCurrentSubtitle(prev => ({
+  // Función para activar/desactivar subtítulos por idioma
+  const toggleSubtitles = (language) => {
+    if (!videoRef.current) return;
+    
+    // Obtener todas las pistas de subtítulos
+    const tracks = videoRef.current.textTracks;
+    
+    // Actualizar estado
+    setActiveSubtitles(prev => {
+      const newState = {
         ...prev,
-        entries: [
-          ...prev.entries,
-          {
-            startTime: 0,
-            endTime: videoDuration > 5 ? 5 : videoDuration,
-            text: ''
-          }
-        ]
-      }));
-    }
+        [language]: !prev[language]
+      };
+      
+      // Aplicar cambios a las pistas de subtítulos
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        if (track.language === language) {
+          // Activar o desactivar según el nuevo estado
+          track.mode = newState[language] ? 'showing' : 'disabled';
+        }
+      }
+      
+      return newState;
+    });
   };
   
-  // Eliminar entrada de subtítulo
-  const removeSubtitleEntry = (index) => {
-    if (currentSubtitle && currentSubtitle.entries.length > index) {
-      setCurrentSubtitle(prev => ({
-        ...prev,
-        entries: prev.entries.filter((_, i) => i !== index)
-      }));
-    }
-  };
-  
-  // Generar archivo VTT
-  const generateVTT = (language) => {
+  // Generar subtítulos automáticamente
+  const generateAutomaticSubtitles = (language) => {
+    // Aquí se implementaría la lógica para generar subtítulos automáticamente
+    // Por ejemplo, usando una API de reconocimiento de voz o un servicio externo
+    
+    // Por ahora, generamos subtítulos de ejemplo para demostrar la funcionalidad
+    const exampleSubtitles = [
+      {
+        startTime: 0,
+        endTime: 5,
+        text: language === 'en' ? 'This is an example subtitle' : 'Este es un subtítulo de ejemplo'
+      },
+      {
+        startTime: 5,
+        endTime: 10,
+        text: language === 'en' ? 'Generated automatically' : 'Generado automáticamente'
+      },
+      {
+        startTime: 10,
+        endTime: 15,
+        text: language === 'en' ? 'Using the TextTrack API' : 'Usando la API de TextTrack'
+      }
+    ];
+    
+    // Actualizar el estado con los subtítulos generados
     setSubtitles(prevSubtitles => {
-      return prevSubtitles.map(subtitle => {
-        if (subtitle.language === language && subtitle.entries.length > 0) {
-          // Limpiar URL anterior si existe
-          if (subtitle.vttUrl) {
-            URL.revokeObjectURL(subtitle.vttUrl);
-          }
-          
-          // Generar contenido VTT
-          const vttContent = SubtitleGenerator.generateVTT(
-            subtitle.entries,
-            {
-              color: subtitle.color,
-              backgroundColor: subtitle.backgroundColor,
-              fontSize: subtitle.fontSize,
-              fontFamily: subtitle.fontFamily
-            }
-          );
-          
-          // Crear URL de blob
+      return prevSubtitles.map(sub => {
+        if (sub.language === language) {
           return {
-            ...subtitle,
-            vttUrl: SubtitleGenerator.createBlobUrl(vttContent)
+            ...sub,
+            entries: exampleSubtitles
           };
         }
-        return subtitle;
+        return sub;
       });
     });
+    
+    // Aplicar los subtítulos al video
+    setTimeout(() => generateSubtitles(language), 100);
+  };
+  
+  // Generar subtítulos usando TextTrack API
+  const generateSubtitles = (language) => {
+    if (!videoRef.current) {
+      console.error('Video no disponible para añadir subtítulos');
+      return;
+    }
+    
+    const subtitle = subtitles.find(sub => sub.language === language);
+    if (!subtitle || !subtitle.entries || subtitle.entries.length === 0) {
+      console.warn(`No hay entradas de subtítulos para el idioma ${language}`);
+      return;
+    }
+    
+    // Obtener todas las pistas de texto del video
+    const textTracks = videoRef.current.textTracks;
+    
+    // Buscar si ya existe una pista para este idioma
+    let track;
+    for (let i = 0; i < textTracks.length; i++) {
+      if (textTracks[i].language === language) {
+        track = textTracks[i];
+        break;
+      }
+    }
+    
+    // Si no existe, crear una nueva pista
+    if (!track) {
+      track = videoRef.current.addTextTrack(
+        'subtitles',
+        language === 'en' ? 'English' : 'Español',
+        language
+      );
+    }
+    
+    // Limpiar pista existente
+    while(track.cues && track.cues.length > 0) {
+      track.removeCue(track.cues[0]);
+    }
+    
+    // Añadir nuevas entradas de subtítulos
+    subtitle.entries.forEach(entry => {
+      const cue = new VTTCue(
+        entry.startTime,
+        entry.endTime,
+        entry.text
+      );
+      
+      // Aplicar estilos
+      if (subtitle.color) cue.color = subtitle.color;
+      if (subtitle.backgroundColor) cue.backgroundColor = subtitle.backgroundColor;
+      if (subtitle.fontSize) cue.fontSize = subtitle.fontSize;
+      if (subtitle.fontFamily) cue.fontFamily = subtitle.fontFamily;
+      
+      // Añadir a la pista
+      track.addCue(cue);
+    });
+    
+    // Activar la pista según el estado actual
+    track.mode = activeSubtitles[language] ? 'showing' : 'hidden';
+    
+    // Actualizar estado para indicar que los subtítulos están activos
+    setSubtitles(prevSubtitles => {
+      return prevSubtitles.map(sub => {
+        if (sub.language === language) {
+          return {
+            ...sub,
+            vttUrl: true // Usamos vttUrl como indicador de que los subtítulos están activos
+          };
+        }
+        return sub;
+      });
+    });
+    
+    console.log(`Subtítulos en ${language} generados correctamente con ${subtitle.entries.length} entradas`);
   };
   
   // Vista previa de subtítulos
@@ -262,8 +378,12 @@ const VideoUpload = () => {
     const subtitle = subtitles.find(sub => sub.language === language);
     
     if (subtitle && subtitle.vttUrl && videoRef.current) {
+      // Asegurarse de que los subtítulos estén activos
+      toggleSubtitles(language, true);
+      
       // Reiniciar video al principio
       videoRef.current.currentTime = 0;
+      
       // Comenzar reproducción con subtítulos
       videoRef.current.play();
       setIsPlaying(true);
@@ -316,7 +436,7 @@ const VideoUpload = () => {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
   
-  // Subir video
+  // Subir video procesado con subtítulos y audio personalizado
   const uploadVideo = () => {
     if (!videoFile) {
       setUploadError('No se ha seleccionado ningún video');
@@ -331,6 +451,18 @@ const VideoUpload = () => {
     const formData = new FormData();
     formData.append('video', videoFile);
     
+    // Añadir metadatos del video
+    formData.append('videoName', videoName);
+    formData.append('videoDuration', videoDuration.toString());
+    formData.append('videoFormat', videoFormat);
+    
+    // Añadir información sobre si tiene audio personalizado
+    const hasCustomAudio = audioTracks.some(track => track.url);
+    formData.append('hasCustomAudio', hasCustomAudio.toString());
+    
+    // Añadir información sobre los subtítulos activos
+    formData.append('activeSubtitles', JSON.stringify(activeSubtitles));
+    
     // Subir video
     axios.post(`${apiUrl}/upload`, formData, {
       headers: {
@@ -342,30 +474,52 @@ const VideoUpload = () => {
       }
     })
     .then(response => {
+      const videoId = response.data.video.id;
       setUploadSuccess(true);
       setUploadedVideoUrl(response.data.video.path);
+      
+      // Crear un array de promesas para todas las subidas adicionales
+      const uploadPromises = [];
       
       // Subir subtítulos para cada idioma
       subtitles.forEach(subtitle => {
         if (subtitle.entries && subtitle.entries.length > 0) {
-          uploadSubtitle(response.data.video.id, subtitle);
+          uploadPromises.push(uploadSubtitle(videoId, subtitle));
         }
       });
       
       // Subir pistas de audio para cada idioma
       audioTracks.forEach(track => {
         if (track.file) {
-          uploadAudioTrack(response.data.video.id, track);
+          uploadPromises.push(uploadAudioTrack(videoId, track));
         }
       });
+      
+      // Esperar a que todas las subidas adicionales terminen
+      Promise.all(uploadPromises)
+        .then(() => {
+          console.log('Todas las subidas completadas exitosamente');
+          // Notificar al backend que todas las subidas están completas
+          return axios.post(`${apiUrl}/${videoId}/finalize`, {
+            hasCustomAudio,
+            activeSubtitles
+          });
+        })
+        .then(() => {
+          console.log('Video procesado y finalizado correctamente');
+        })
+        .catch(error => {
+          console.error('Error en las subidas adicionales:', error);
+          setUploadError(`Error en las subidas adicionales: ${error.message}`);
+        })
+        .finally(() => {
+          setIsUploading(false);
+        });
     })
     .catch(error => {
       setIsUploading(false);
-      setUploadError(`Error en la subida: ${error.message}`);
+      setUploadError(`Error en la subida del video: ${error.message}`);
       console.error('Error uploading video:', error);
-    })
-    .finally(() => {
-      setIsUploading(false);
     });
   };
   
@@ -510,33 +664,119 @@ const VideoUpload = () => {
         <div className="preview-section">
           <h2>Vista Previa del Video</h2>
           <div className="video-preview">
-            <video 
-              ref={videoRef} 
-              src={videoPreview} 
-              controls
-            >
-              {subtitles.map(subtitle => 
-                subtitle.vttUrl && (
-                  <track 
-                    key={subtitle.id}
-                    src={subtitle.vttUrl} 
-                    label={subtitle.language === 'en' ? 'English' : 'Español'} 
-                    srcLang={subtitle.language} 
-                    default={subtitle.language === 'en'}
-                    kind="subtitles"
-                  />
-                )
-              )}
-              {audioTracks.map(track => 
-                track.url && (
-                  <source 
-                    key={track.id}
-                    src={track.url} 
-                    type={track.mimeType} 
-                  />
-                )
-              )}
-            </video>
+            {/* Video con audio original (se oculta cuando hay audio personalizado) */}
+            {!audioTracks.some(track => track.url) && (
+              <video 
+                ref={videoRef} 
+                src={videoPreview} 
+                controls
+                className="main-video"
+              >
+                {subtitles.map(subtitle => 
+                  subtitle.vttUrl && (
+                    <track 
+                      key={subtitle.id}
+                      src={subtitle.vttUrl} 
+                      label={subtitle.language === 'en' ? 'English' : 'Español'} 
+                      srcLang={subtitle.language} 
+                      default={subtitle.language === 'en'}
+                      kind="subtitles"
+                    />
+                  )
+                )}
+              </video>
+            )}
+            
+            {/* Video con audio personalizado */}
+            {audioTracks.some(track => track.url) && (
+              <div className="video-with-custom-audio">
+                <video 
+                  ref={videoRef} 
+                  src={videoPreview} 
+                  controls
+                  className="main-video"
+                  muted={true} // Silenciar el video original
+                  onPlay={() => {
+                    // Sincronizar reproducción de audio cuando se inicia el video
+                    const activeAudio = document.querySelector('.custom-audio-track');
+                    if (activeAudio) {
+                      activeAudio.currentTime = videoRef.current.currentTime;
+                      activeAudio.play();
+                    }
+                  }}
+                  onPause={() => {
+                    // Pausar audio cuando se pausa el video
+                    const activeAudio = document.querySelector('.custom-audio-track');
+                    if (activeAudio) {
+                      activeAudio.pause();
+                    }
+                  }}
+                  onSeeked={() => {
+                    // Sincronizar posición del audio cuando se busca en el video
+                    const activeAudio = document.querySelector('.custom-audio-track');
+                    if (activeAudio) {
+                      activeAudio.currentTime = videoRef.current.currentTime;
+                    }
+                  }}
+                >
+                  {subtitles.map(subtitle => 
+                    subtitle.vttUrl && (
+                      <track 
+                        key={subtitle.id}
+                        src={subtitle.vttUrl} 
+                        label={subtitle.language === 'en' ? 'English' : 'Español'} 
+                        srcLang={subtitle.language} 
+                        default={activeSubtitles[subtitle.language]}
+                        kind="subtitles"
+                      />
+                    )
+                  )}
+                </video>
+                
+                {/* Audio personalizado (oculto pero sincronizado con el video) */}
+                {audioTracks.map(track => 
+                  track.url && (
+                    <audio 
+                      key={track.id}
+                      src={track.url} 
+                      className="custom-audio-track"
+                      style={{ display: 'none' }}
+                    />
+                  )
+                )}
+                
+                <div className="custom-audio-info">
+                  <span className="audio-badge">Audio personalizado activo</span>
+                  {audioTracks.filter(track => track.url).map(track => (
+                    <div key={track.id} className="audio-track-info">
+                      <span>{track.language === 'en' ? 'Audio en inglés' : 'Audio en español'}</span>
+                      <span className="audio-filename">{track.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Controles de subtítulos */}
+            {subtitles.some(subtitle => subtitle.vttUrl) && (
+              <div className="subtitle-controls">
+                <h4>Controles de Subtítulos</h4>
+                <div className="subtitle-toggle-buttons">
+                  {subtitles.map(subtitle => 
+                    subtitle.vttUrl && (
+                      <button 
+                        key={`toggle-${subtitle.id}`}
+                        className={`btn ${activeSubtitles[subtitle.language] ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => toggleSubtitles(subtitle.language)}
+                      >
+                        {subtitle.language === 'en' ? 'Subtítulos en Inglés' : 'Subtítulos en Español'}: 
+                        {activeSubtitles[subtitle.language] ? 'ON' : 'OFF'}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="video-metadata">
@@ -556,43 +796,53 @@ const VideoUpload = () => {
             {subtitles.map(subtitle => (
               <div key={subtitle.id} className="subtitle-language">
                 <h4>{subtitle.language === 'en' ? 'Subtítulos en Inglés' : 'Subtítulos en Español'}</h4>
-                <div 
-                  className="subtitle-preview" 
-                  style={{
-                    color: subtitle.color,
-                    backgroundColor: subtitle.backgroundColor,
-                    fontSize: subtitle.fontSize,
-                    fontFamily: subtitle.fontFamily
-                  }}
-                >
-                  {subtitle.text || 'Texto de ejemplo para subtítulos'}
-                </div>
+                
                 <div className="subtitle-status">
                   <span className={`status-badge ${subtitle.vttUrl ? 'active' : ''}`}>
                     {subtitle.vttUrl ? 'Subtítulos Activos' : 'Sin Subtítulos'}
                   </span>
+                  {subtitle.vttUrl && (
+                    <span className={`subtitle-toggle ${activeSubtitles[subtitle.language] ? 'on' : 'off'}`}>
+                      {activeSubtitles[subtitle.language] ? 'Visibles' : 'Ocultos'}
+                    </span>
+                  )}
                 </div>
+                
                 <div className="subtitle-actions">
                   <button 
-                    onClick={() => editSubtitle(subtitle.language)} 
+                    onClick={() => generateAutomaticSubtitles(subtitle.language)} 
                     className="btn btn-primary"
+                    disabled={!videoPreview}
                   >
-                    Editar Subtítulos
+                    Generar Subtítulos Automáticos
                   </button>
-                  <button 
-                    onClick={() => generateVTT(subtitle.language)} 
-                    className="btn btn-success" 
-                    disabled={!subtitle.text}
-                  >
-                    Generar Subtítulos
-                  </button>
-                  <button 
-                    onClick={() => previewSubtitles(subtitle.language)} 
-                    className="btn btn-info" 
-                    disabled={!subtitle.vttUrl}
-                  >
-                    Vista Previa
-                  </button>
+                  
+                  {subtitle.entries && subtitle.entries.length > 0 && (
+                    <button 
+                      onClick={() => generateSubtitles(subtitle.language)} 
+                      className="btn btn-success"
+                    >
+                      Aplicar al Video
+                    </button>
+                  )}
+                  
+                  {subtitle.vttUrl && (
+                    <>
+                      <button 
+                        onClick={() => toggleSubtitles(subtitle.language)} 
+                        className={`btn ${activeSubtitles[subtitle.language] ? 'btn-warning' : 'btn-info'}`}
+                      >
+                        {activeSubtitles[subtitle.language] ? 'Ocultar' : 'Mostrar'}
+                      </button>
+                      
+                      <button 
+                        onClick={() => previewSubtitles(subtitle.language)} 
+                        className="btn btn-info"
+                      >
+                        Vista Previa
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}

@@ -347,7 +347,7 @@ const ImageUpload = () => {
                   <div className="image-preview">
                     <img src={originalImagePreview} alt="Original" className="original-preview" />
                   </div>
-                  <div className="image-metadata">
+                  <div className="image-metadata" style={"color: black;"}>
                     <h4>Detalles Originales</h4>
                     <ul>
                       <li><strong>Nombre:</strong> {imageName}</li>

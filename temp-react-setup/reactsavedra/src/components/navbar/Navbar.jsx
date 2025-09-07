@@ -214,19 +214,6 @@ const Navbar = () => {
             </>
           )}
           
-          {isLoggedIn && isAdmin && (
-            <Link
-              to="/usuarios"
-              className="nav-link"
-              style={{
-                color: colors[0],
-                fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
-                fontSize: `${sizes.paragraph}px`
-              }}
-            >
-              Data Table de Usuarios
-            </Link>
-          )}
         </nav>
 
         {/* Desktop actions */}
