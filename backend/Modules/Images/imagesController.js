@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const ImagesModel = require('./imagesModel');
+const {ImagesModel} = require('./imagesModel');
 
 // Directory to store uploaded images
 const UPLOAD_DIR = path.join(__dirname, '../../public/uploads/images');

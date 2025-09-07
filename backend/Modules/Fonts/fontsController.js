@@ -13,7 +13,9 @@ class FontsController {
         const id_usuario = isAuthenticated.id;
         try {
             const updatedFont = await FontsModel.updateFontPre(id, id_usuario);
+            console.log(updatedFont);
             if (!updatedFont) {
+                console.error('No se pudo actualizar la fuente predeterminada');
                 return res.status(404).json({ error: 'Fuente no encontrada' });
             }
             return res.json(updatedFont);

@@ -39,13 +39,13 @@ export const StyleProvider = ({ children }) => {
   // Cargar estilos al iniciar
   useEffect(() => {
     console.log('StyleContext inicializado');
-    testBackendConnection();
+    //testBackendConnection();
     loadDefaultStyles();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Probar conexión con el backend
-  const testBackendConnection = () => {
+  /*const testBackendConnection = () => {
     console.log('Probando conexión con el backend...');
     
     // Probar conexión básica
@@ -66,7 +66,7 @@ export const StyleProvider = ({ children }) => {
             console.log('❌ Endpoint de colores no accesible:', err);
           });
       });
-  };
+  };*/
 
   // Cargar estilos por defecto
   const loadDefaultStyles = () => {

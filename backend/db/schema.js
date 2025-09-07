@@ -329,4 +329,4 @@ Usuarios.hasMany(Criptomonedas, { foreignKey: 'user_id', onDelete: 'CASCADE' });
 Criptomonedas.belongsTo(Usuarios, { foreignKey: 'user_id' });
 
 
-module.exports = { Usuarios , Colores , Fuentes , Cabellos, Direcciones, InformacionBancaria, InformacionCompania, Criptomonedas, Imagenes };
+module.exports = { Usuarios , Colores , Fuentes , Cabellos, Direcciones, InformacionBancaria, InformacionCompania, Criptomonedas, Imagenes ,Videos};
