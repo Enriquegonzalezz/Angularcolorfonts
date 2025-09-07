@@ -1,3 +1,4 @@
+import Swal from "sweetalert2";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -5,7 +6,6 @@ import { useAuth } from '../../services/AuthContext';
 import './Colors.css';
 import { useStyles } from '../../services/StyleContext';
 
-// Definición de tipos
 const initialColors = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
 
 const Colors = () => {
@@ -21,7 +21,6 @@ const Colors = () => {
     fetchColors();
   }, []);
 
-  // Verificar autenticación
   const checkAuth = () => {
     if (!isAuthenticated()) {
       navigate('/login');
@@ -30,17 +29,13 @@ const Colors = () => {
     return true;
   };
 
-  // Obtener colores guardados
   const fetchColors = () => {
-    //if (!checkAuth()) return;
-
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
 
     axios.get('http://localhost:3000/colors', { headers })
       .then(response => {
         setSavedColors(response.data);
-        // Encontrar el color predeterminado
         const defaultColor = response.data.find(color => color.is_default || color.predeterminado === 1);
         if (defaultColor) {
           setDefaultColorId(defaultColor.id);
@@ -52,38 +47,27 @@ const Colors = () => {
       });
   };
 
-  // Manejar cambio de color
   const handleColorChange = (index, value) => {
     const newColors = [...colors];
     newColors[index] = value;
     setColors(newColors);
   };
 
-  // Validar paleta de colores
   const isValidColorPalette = () => {
     const isValid = colors.every(color => color.length === 7);
-    console.log('Validando paleta:', colors, 'isValid:', isValid);
     return isValid;
   };
 
-  // Guardar selección de colores
+  // GUARDAR
   const handleSave = () => {
     if (!checkAuth()) return;
 
-    console.log('Botón de guardar presionado');
-    console.log('Colores actuales:', colors);
-    console.log('¿Es válida la paleta?', isValidColorPalette());
-    
-    // Verificar si hay colores vacíos o inválidos
     if (colors.some(color => !color || color.length !== 7)) {
-      console.error('Hay colores vacíos o inválidos');
-      alert('Por favor, asegúrate de que todos los colores estén seleccionados correctamente');
+      Swal.fire("Error", "Por favor, asegúrate de que todos los colores estén seleccionados correctamente", "error");
       return;
     }
-    
     if (!isValidColorPalette()) {
-      console.error('La paleta de colores no es válida');
-      alert('La paleta de colores no es válida. Asegúrate de que todos los colores tengan un formato hexadecimal válido (ej: #RRGGBB)');
+      Swal.fire("Error", "La paleta de colores no es válida. Asegúrate de que todos los colores tengan un formato hexadecimal válido (ej: #RRGGBB)", "error");
       return;
     }
 
@@ -95,20 +79,17 @@ const Colors = () => {
       color_5: colors[4]
     };
 
-    console.log('Enviando datos al servidor:', colorData);
-
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
 
     axios.post('http://localhost:3000/colors/store', colorData, { headers })
       .then(response => {
-        console.log('Respuesta del servidor:', response.data);
-        console.log('Datos guardados exitosamente');
+        Swal.fire("Guardado", "La paleta se guardó correctamente.", "success");
         fetchColors();
         resetForm();
       })
       .catch(error => {
-        console.error('Error al guardar los colores:', error);
+        Swal.fire("Error", "No se pudo guardar la paleta.", "error");
         if (error.code === 'ERR_NETWORK') {
           console.error('No se pudo conectar al servidor. ¿Está ejecutando el servidor backend en http://localhost:3000?');
         }
@@ -116,7 +97,7 @@ const Colors = () => {
       });
   };
 
-  // Actualizar colores
+  // ACTUALIZAR
   const handleUpdate = () => {
     if (editRow === null) return;
     if (!checkAuth()) return;
@@ -135,82 +116,79 @@ const Colors = () => {
 
     axios.put(`http://localhost:3000/colors/update/${colorId}`, colorData, { headers })
       .then(() => {
+        Swal.fire("Actualizado", "La paleta se actualizó correctamente.", "success");
         fetchColors();
         setEditRow(null);
         resetForm();
       })
       .catch(error => {
-        console.error('Error al actualizar los colores:', error);
+        Swal.fire("Error", "No se pudo actualizar la paleta.", "error");
         navigate('/login');
       });
   };
 
-  // Eliminar color
+  // ELIMINAR
   const handleDelete = (colorId) => {
     if (!checkAuth()) return;
 
-    // Si se elimina el color predeterminado, limpiar defaultColorId
-    if (defaultColorId === colorId) {
-      setDefaultColorId(null);
-    }
+    Swal.fire({
+      title: "¿Estás seguro?",
+      text: "Esta acción eliminará la paleta de colores.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Sí, eliminar",
+      cancelButtonText: "Cancelar"
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const token = localStorage.getItem('access_token');
+        const headers = { Authorization: `Bearer ${token}` };
 
-    const token = localStorage.getItem('access_token');
-    const headers = { Authorization: `Bearer ${token}` };
-
-    axios.delete(`http://localhost:3000/colors/delete/${colorId}`, { headers })
-      .then(() => {
-        setSavedColors(savedColors.filter(row => row.id !== colorId));
-      })
-      .catch(error => {
-        console.error('Error al eliminar el color:', error);
-        navigate('/login');
-      });
+        axios.delete(`http://localhost:3000/colors/delete/${colorId}`, { headers })
+          .then(() => {
+            Swal.fire("Eliminado", "La paleta fue eliminada.", "success");
+            setSavedColors(savedColors.filter(row => row.id !== colorId));
+          })
+          .catch(error => {
+            Swal.fire("Error", "No se pudo eliminar la paleta.", "error");
+            navigate('/login');
+          });
+      }
+    });
   };
 
-  // Editar fila
   const handleEdit = (rowIdx) => {
     setEditRow(rowIdx);
     const row = savedColors[rowIdx];
     setColors([row.color_1, row.color_2, row.color_3, row.color_4, row.color_5]);
-
-    // Establecer color predeterminado si este era el predeterminado
     if (row.is_default || row.predeterminado === 1) {
       setDefaultColorId(row.id);
     }
   };
 
-  // Establecer color predeterminado
   const handleToggleDefault = async (colorId) => {
     try {
       const token = localStorage.getItem('access_token');
       const headers = { Authorization: `Bearer ${token}` };
 
       await axios.put(`http://localhost:3000/colors/update/predeterminado/${colorId}`, {}, { headers });
-      
-      console.log('Predeterminado actualizado exitosamente');
       await fetchDefaultColors();
       await fetchDefaultFonts();
       fetchColors(); 
     } catch (error) {
-      console.error('Error al actualizar el predeterminado:', error);
+      Swal.fire("Error", "No se pudo actualizar el color predeterminado.", "error");
       navigate('/login');
     }
   };
 
-  // Resetear formulario
   const resetForm = () => {
-    console.log('Reseteando formulario...');
     setEditRow(null);
     setColors(initialColors);
-    console.log('Formulario reseteado. Colores:', initialColors);
   };
 
-  // Navegar a la página de fuentes
   const goToFonts = () => {
     navigate('/fonts');
   };
 
-  // Regresar al home
   const goToHome = () => {
     navigate('/');
   };

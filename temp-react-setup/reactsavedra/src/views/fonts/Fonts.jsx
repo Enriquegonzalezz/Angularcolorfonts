@@ -1,10 +1,13 @@
+import Swal from "sweetalert2";
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../../services/AuthContext';
+import { useStyles } from '../../services/StyleContext';
 import './Fonts.css';
 
 const Fonts = () => {
+  const { fetchDefaultColors, fetchDefaultFonts } = useStyles();
   const [fontFiles, setFontFiles] = useState([null, null]);
   const [fontUrls, setFontUrls] = useState([null, null]);
   const [sizes, setSizes] = useState({ paragraph: 16, subtitle: 24, title: 32 });
@@ -18,12 +21,10 @@ const Fonts = () => {
   useEffect(() => {
     fetchFonts();
     return () => {
-      // Cleanup font styles when component unmounts
       cleanupFontStyles();
     };
   }, []);
 
-  // Verificar autenticación
   const checkAuth = () => {
     if (!isAuthenticated()) {
       navigate('/login');
@@ -32,7 +33,6 @@ const Fonts = () => {
     return true;
   };
 
-  // Obtener fuentes guardadas
   const fetchFonts = () => {
     if (!checkAuth()) return;
 
@@ -42,7 +42,6 @@ const Fonts = () => {
     axios.get('http://localhost:3000/fonts', { headers })
       .then(response => {
         setSavedFonts(response.data);
-        // Encontrar la fuente predeterminada
         const defaultFont = response.data.find(font => font.is_default || font.predeterminado === 1);
         if (defaultFont) {
           setDefaultFontId(defaultFont.id);
@@ -54,7 +53,6 @@ const Fonts = () => {
       });
   };
 
-  // Manejar cambio de archivo de fuente
   const handleFileChange = (index, event) => {
     const input = event.target;
     if (input.files && input.files[0]) {
@@ -65,7 +63,6 @@ const Fonts = () => {
     }
   };
 
-  // Actualizar vista previa de fuente
   const updateFontPreview = (index, file) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -73,7 +70,6 @@ const Fonts = () => {
       newFontUrls[index] = e.target.result;
       setFontUrls(newFontUrls);
       
-      // Crear estilo para la fuente
       const fontName = `Font${index + 1}`;
       const styleId = `font-style-${index}`;
       let styleElement = document.getElementById(styleId);
@@ -96,7 +92,6 @@ const Fonts = () => {
     reader.readAsDataURL(file);
   };
 
-  // Manejar cambio de tamaño
   const handleSizeChange = (type, value) => {
     setSizes(prevSizes => ({
       ...prevSizes,
@@ -104,12 +99,16 @@ const Fonts = () => {
     }));
   };
 
-  // Guardar fuentes
-  const handleSave = () => {
+  // Guardar fuentes (con SweetAlerts)
+  const handleSave = async () => {
     if (!checkAuth()) return;
     
     if (!fontFiles[0] || !fontFiles[1]) {
-      alert('Por favor, selecciona ambas fuentes');
+      Swal.fire({
+        icon: 'warning',
+        title: '¡Faltan fuentes!',
+        text: 'Por favor, selecciona ambas fuentes para continuar.',
+      });
       return;
     }
 
@@ -123,25 +122,34 @@ const Fonts = () => {
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    axios.post('http://localhost:3000/fonts/store', formData, { 
-      headers: {
-        ...headers,
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-      .then(response => {
-        console.log('Fuentes guardadas exitosamente:', response.data);
-        fetchFonts();
-        resetForm();
-      })
-      .catch(error => {
-        console.error('Error al guardar las fuentes:', error);
-        navigate('/login');
+    try {
+      await axios.post('http://localhost:3000/fonts/store', formData, { 
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data'
+        }
       });
+      Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: 'Las fuentes se han guardado exitosamente.',
+        confirmButtonText: 'Aceptar'
+      });
+      fetchFonts();
+      resetForm();
+    } catch (error) {
+      console.error('Error al guardar las fuentes:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al guardar las fuentes.',
+      });
+      navigate('/login');
+    }
   };
 
-  // Actualizar fuentes
-  const handleUpdate = () => {
+  // Actualizar fuentes (con SweetAlerts)
+  const handleUpdate = async () => {
     if (editRow === null) return;
     if (!checkAuth()) return;
 
@@ -163,46 +171,103 @@ const Fonts = () => {
     const token = localStorage.getItem('access_token');
     const headers = { Authorization: `Bearer ${token}` };
 
-    axios.post(`http://localhost:3000/fonts/update/${fontId}`, formData, { 
-      headers: {
-        ...headers,
-        'Content-Type': 'multipart/form-data'
-      }
-    })
-      .then(() => {
-        fetchFonts();
-        setEditRow(null);
-        resetForm();
-      })
-      .catch(error => {
-        console.error('Error al actualizar las fuentes:', error);
-        navigate('/login');
+    try {
+      await axios.post(`http://localhost:3000/fonts/update/${fontId}`, formData, { 
+        headers: {
+          ...headers,
+          'Content-Type': 'multipart/form-data'
+        }
       });
+      Swal.fire({
+        icon: 'success',
+        title: '¡Actualizado!',
+        text: 'Las fuentes se han actualizado exitosamente.',
+        confirmButtonText: 'Aceptar'
+      });
+      fetchFonts();
+      setEditRow(null);
+      resetForm();
+    } catch (error) {
+      console.error('Error al actualizar las fuentes:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al actualizar las fuentes.',
+      });
+      navigate('/login');
+    }
   };
 
-  // Eliminar fuente
+  // Eliminar fuente (con SweetAlerts y confirmación)
   const handleDelete = (fontId) => {
     if (!checkAuth()) return;
 
-    // Si se elimina la fuente predeterminada, limpiar defaultFontId
-    if (defaultFontId === fontId) {
-      setDefaultFontId(null);
-    }
-
-    const token = localStorage.getItem('access_token');
-    const headers = { Authorization: `Bearer ${token}` };
-
-    axios.delete(`http://localhost:3000/fonts/delete/${fontId}`, { headers })
-      .then(() => {
-        setSavedFonts(savedFonts.filter(row => row.id !== fontId));
-      })
-      .catch(error => {
-        console.error('Error al eliminar la fuente:', error);
-        navigate('/login');
-      });
+    Swal.fire({
+      title: '¿Estás seguro?',
+      text: "No podrás revertir esto!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33',
+      confirmButtonText: 'Sí, eliminar',
+      cancelButtonText: 'Cancelar'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        const token = localStorage.getItem('access_token');
+        const headers = { Authorization: `Bearer ${token}` };
+        
+        try {
+          await axios.delete(`http://localhost:3000/fonts/delete/${fontId}`, { headers });
+          Swal.fire(
+            '¡Eliminado!',
+            'La fuente ha sido eliminada.',
+            'success'
+          );
+          setSavedFonts(savedFonts.filter(row => row.id !== fontId));
+          if (defaultFontId === fontId) {
+            setDefaultFontId(null);
+          }
+        } catch (error) {
+          console.error('Error al eliminar la fuente:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Hubo un problema al eliminar la fuente.',
+          });
+          navigate('/login');
+        }
+      }
+    });
   };
 
-  // Editar fila
+  // Establecer fuente predeterminada (con SweetAlerts)
+  const handleToggleDefault = async (fontId) => {
+    //if (!checkAuth()) return;
+    try {
+      const token = localStorage.getItem('access_token');
+      const headers = { Authorization: `Bearer ${token}` };
+      await axios.put(`http://localhost:3000/fonts/update/predeterminado/${fontId}`, {}, { headers });
+      Swal.fire({
+        icon: 'success',
+        title: '¡Actualizado!',
+        text: 'La fuente predeterminada ha sido actualizada.',
+        showConfirmButton: false,
+        timer: 1500
+      });
+      await fetchDefaultFonts();
+      await fetchDefaultColors();
+      fetchFonts();
+    } catch (error) {
+      console.error('Error al actualizar el predeterminado:', error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Hubo un problema al establecer la fuente como predeterminada.',
+      });
+      navigate('/login');
+    }
+  };
+
   const handleEdit = (rowIdx) => {
     setEditRow(rowIdx);
     const row = savedFonts[rowIdx];
@@ -211,14 +276,10 @@ const Fonts = () => {
       subtitle: row.tamano_2,
       title: row.tamano_3
     });
-
-    // Cargar URLs de fuentes para previsualización
     setFontUrls([
       row.fuente_1 ? `${FONT_BASE_URL}${row.fuente_1}` : null,
       row.fuente_2 ? `${FONT_BASE_URL}${row.fuente_2}` : null
     ]);
-
-    // Crear estilos para las fuentes
     if (row.fuente_1) {
       const styleElement = document.createElement('style');
       styleElement.id = 'font-style-0';
@@ -232,7 +293,6 @@ const Fonts = () => {
       `;
       document.head.appendChild(styleElement);
     }
-
     if (row.fuente_2) {
       const styleElement = document.createElement('style');
       styleElement.id = 'font-style-1';
@@ -246,32 +306,11 @@ const Fonts = () => {
       `;
       document.head.appendChild(styleElement);
     }
-
-    // Establecer fuente predeterminada si esta era la predeterminada
     if (row.is_default || row.predeterminado === 1) {
       setDefaultFontId(row.id);
     }
   };
 
-  // Establecer fuente predeterminada
-  const handleToggleDefault = (fontId) => {
-    if (!checkAuth()) return;
-
-    const token = localStorage.getItem('access_token');
-    const headers = { Authorization: `Bearer ${token}` };
-    
-    axios.put(`http://localhost:3000/fonts/update/predeterminado/${fontId}`, {}, { headers })
-      .then(() => {
-        console.log('Predeterminado actualizado exitosamente');
-        fetchFonts(); // Refrescar la lista
-      })
-      .catch(error => {
-        console.error('Error al actualizar el predeterminado:', error);
-        navigate('/login');
-      });
-  };
-
-  // Resetear formulario
   const resetForm = () => {
     setFontFiles([null, null]);
     setFontUrls([null, null]);
@@ -280,7 +319,6 @@ const Fonts = () => {
     cleanupFontStyles();
   };
 
-  // Limpiar estilos de fuentes
   const cleanupFontStyles = () => {
     const styleElement1 = document.getElementById('font-style-0');
     const styleElement2 = document.getElementById('font-style-1');
@@ -294,17 +332,14 @@ const Fonts = () => {
     }
   };
 
-  // Navegar a la página de colores
   const goToColors = () => {
     navigate('/colors');
   };
 
-  // Regresar al home
   const goToHome = () => {
     navigate('/');
   };
 
-  // Obtener familia de fuente para previsualización
   const getFontFamily1 = () => {
     return fontUrls[0] ? "'Font1', sans-serif" : "sans-serif";
   };
