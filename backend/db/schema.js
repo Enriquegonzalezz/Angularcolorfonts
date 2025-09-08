@@ -296,7 +296,31 @@ Videos.init({
     },duracion: {
         type: DataTypes.STRING,
         allowNull: false
-    }
+    },nombre_subtitulo_1: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },nombre_subtitulo_2: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },nombre_audio_1: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },nombre_audio_2: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },color_letra_subtitulo: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },fondo_subtitulo: {
+        type: DataTypes.STRING, 
+        allowNull: true
+    },tamano_subtitulo: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },tipografia_subtitulo: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
 },{
     sequelize,
     timestamps: false,

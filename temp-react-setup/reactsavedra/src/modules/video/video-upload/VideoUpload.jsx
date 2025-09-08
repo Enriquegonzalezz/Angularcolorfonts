@@ -31,27 +31,29 @@ const VideoUpload = () => {
   
   // Subtítulos
   const [subtitles, setSubtitles] = useState([
-    {
-      id: 'en-subtitle',
-      language: 'en',
-      text: '',
-      entries: [],
+    { 
+      id: 1, 
+      language: 'es', 
+      entries: [], 
+      vttUrl: null, 
+      fileName: null,
       color: '#ffffff',
       backgroundColor: '#000000',
-      fontSize: '16px',
-      fontFamily: 'Arial',
-      vttUrl: undefined
+      fontSize: '18px',
+      fontFile: null,
+      fontUrl: null
     },
-    {
-      id: 'es-subtitle',
-      language: 'es',
-      text: '',
-      entries: [],
+    { 
+      id: 2, 
+      language: 'en', 
+      entries: [], 
+      vttUrl: null, 
+      fileName: null,
       color: '#ffffff',
       backgroundColor: '#000000',
-      fontSize: '16px',
-      fontFamily: 'Arial',
-      vttUrl: undefined
+      fontSize: '18px',
+      fontFile: null,
+      fontUrl: null
     }
   ]);
   
@@ -76,12 +78,47 @@ const VideoUpload = () => {
     }
   ]);
   
+  // Control de audio activo
+  const [activeAudioTrack, setActiveAudioTrack] = useState('original'); // 'original', 'en', 'es'
+  
+  // Función para cambiar pista de audio y asegurar sincronización
+  const switchAudioTrack = (trackType) => {
+    // Pausar todos los audios primero
+    audioTracks.forEach(track => {
+      if (track.url) {
+        const audio = document.querySelector(`.audio-track-${track.language}`);
+        if (audio) {
+          audio.pause();
+        }
+      }
+    });
+    
+    // Cambiar el estado
+    setActiveAudioTrack(trackType);
+    
+    // Si el video está reproduciéndose, sincronizar el nuevo audio
+    if (videoRef.current && !videoRef.current.paused) {
+      setTimeout(() => {
+        if (trackType !== 'original') {
+          const activeAudio = document.querySelector(`.audio-track-${trackType}`);
+          if (activeAudio) {
+            activeAudio.currentTime = videoRef.current.currentTime;
+            activeAudio.play();
+          }
+        }
+      }, 100);
+    }
+  };
+  
   // Opciones de fuente
   const fontFamilies = ['Arial', 'Verdana', 'Times New Roman', 'Courier New', 'Georgia'];
   const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px'];
   
   // URL de la API
   const apiUrl = 'http://localhost:3000/videos';
+  
+  // User ID (should be passed as prop or from context/auth)
+  const userId = 1; // Default for testing - should be dynamic
   
   // Limpiar URLs de blob al desmontar el componente
   useEffect(() => {
@@ -435,34 +472,77 @@ const VideoUpload = () => {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
-  
+
+  // Validar tamaños de archivo antes de subir
+  const validateFileSizes = () => {
+    const maxVideoSize = 100 * 1024 * 1024; // 100MB
+    const maxAudioSize = 50 * 1024 * 1024;  // 50MB
+
+    // Validar video
+    if (videoFile && videoFile.size > maxVideoSize) {
+      return `El video es demasiado grande (${formatFileSize(videoFile.size)}). Máximo permitido: ${formatFileSize(maxVideoSize)}`;
+    }
+
+    // Validar archivos de audio
+    for (const track of audioTracks) {
+      if (track.file && track.file.size > maxAudioSize) {
+        return `El archivo de audio en ${track.language} es demasiado grande (${formatFileSize(track.file.size)}). Máximo permitido: ${formatFileSize(maxAudioSize)}`;
+      }
+    }
+
+    return null;
+  };
+
+  // Validar que todos los archivos necesarios estén presentes
+  const validateCompleteness = () => {
+    const errors = [];
+
+    // Verificar video
+    if (!videoFile) {
+      errors.push('Video requerido');
+    }
+
+    // Verificar subtítulos (al menos uno debe tener entradas)
+    const hasSubtitles = subtitles.some(subtitle => subtitle.entries && subtitle.entries.length > 0);
+    if (!hasSubtitles) {
+      errors.push('Al menos un idioma debe tener subtítulos');
+    }
+
+    // Verificar archivos de audio (al menos uno debe estar presente)
+    const hasAudio = audioTracks.some(track => track.file);
+    if (!hasAudio) {
+      errors.push('Al menos un archivo de audio es requerido');
+    }
+
+    return errors;
+  };
+
   // Subir video procesado con subtítulos y audio personalizado
   const uploadVideo = () => {
-    if (!videoFile) {
-      setUploadError('No se ha seleccionado ningún video');
+    // Validar completeness primero
+    const completenessErrors = validateCompleteness();
+    if (completenessErrors.length > 0) {
+      setUploadError(`Faltan elementos requeridos: ${completenessErrors.join(', ')}`);
       return;
     }
-    
+
+    // Validar tamaños de archivo
+    const sizeError = validateFileSizes();
+    if (sizeError) {
+      setUploadError(sizeError);
+      return;
+    }
+
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError('');
-    
+
     // Crear datos de formulario
     const formData = new FormData();
     formData.append('video', videoFile);
-    
-    // Añadir metadatos del video
-    formData.append('videoName', videoName);
-    formData.append('videoDuration', videoDuration.toString());
-    formData.append('videoFormat', videoFormat);
-    
-    // Añadir información sobre si tiene audio personalizado
-    const hasCustomAudio = audioTracks.some(track => track.url);
-    formData.append('hasCustomAudio', hasCustomAudio.toString());
-    
-    // Añadir información sobre los subtítulos activos
-    formData.append('activeSubtitles', JSON.stringify(activeSubtitles));
-    
+    formData.append('userId', userId.toString());
+    formData.append('duration', videoDuration.toString());
+
     // Subir video
     axios.post(`${apiUrl}/upload`, formData, {
       headers: {
@@ -473,145 +553,210 @@ const VideoUpload = () => {
         setUploadProgress(percentCompleted);
       }
     })
-    .then(response => {
-      const videoId = response.data.video.id;
-      setUploadSuccess(true);
-      setUploadedVideoUrl(response.data.video.path);
-      
-      // Crear un array de promesas para todas las subidas adicionales
-      const uploadPromises = [];
-      
-      // Subir subtítulos para cada idioma
-      subtitles.forEach(subtitle => {
-        if (subtitle.entries && subtitle.entries.length > 0) {
-          uploadPromises.push(uploadSubtitle(videoId, subtitle));
-        }
-      });
-      
-      // Subir pistas de audio para cada idioma
-      audioTracks.forEach(track => {
-        if (track.file) {
-          uploadPromises.push(uploadAudioTrack(videoId, track));
-        }
-      });
-      
-      // Esperar a que todas las subidas adicionales terminen
-      Promise.all(uploadPromises)
-        .then(() => {
-          console.log('Todas las subidas completadas exitosamente');
-          // Notificar al backend que todas las subidas están completas
-          return axios.post(`${apiUrl}/${videoId}/finalize`, {
-            hasCustomAudio,
-            activeSubtitles
-          });
-        })
-        .then(() => {
-          console.log('Video procesado y finalizado correctamente');
-        })
-        .catch(error => {
-          console.error('Error en las subidas adicionales:', error);
-          setUploadError(`Error en las subidas adicionales: ${error.message}`);
-        })
-        .finally(() => {
-          setIsUploading(false);
-        });
-    })
-    .catch(error => {
-      setIsUploading(false);
-      setUploadError(`Error en la subida del video: ${error.message}`);
-      console.error('Error uploading video:', error);
-    });
-  };
-  
-  // Reiniciar video
-  const resetVideo = () => {
-    // Limpiar URLs de blob
-    subtitles.forEach(subtitle => {
-      if (subtitle.vttUrl) {
-        URL.revokeObjectURL(subtitle.vttUrl);
-      }
-    });
-    
-    audioTracks.forEach(track => {
-      if (track.url) {
-        URL.revokeObjectURL(track.url);
-      }
-    });
-    
-    // Reiniciar todo el estado
-    setVideoPreview(null);
-    setVideoFile(null);
-    setVideoName('');
-    setVideoSize(0);
-    setVideoDuration(0);
-    setVideoFormat('');
-    
-    // Reiniciar subtítulos y pistas de audio
-    setSubtitles(prevSubtitles => {
-      return prevSubtitles.map(subtitle => ({
-        ...subtitle,
-        text: '',
-        entries: [],
-        vttUrl: undefined
-      }));
-    });
-    
-    setAudioTracks(prevTracks => {
-      return prevTracks.map(track => ({
-        ...track,
-        file: null,
-        url: undefined,
-        mimeType: undefined
-      }));
-    });
-  };
-  
-  // Subir subtítulo
-  const uploadSubtitle = (videoId, subtitle) => {
-    // Crear archivo VTT si aún no se ha creado
-    if (!subtitle.vttUrl && subtitle.entries.length > 0) {
-      generateVTT(subtitle.language);
-    }
-    
-    // Preparar datos de subtítulos para subir
-    const subtitleData = {
-      language: subtitle.language,
-      entries: subtitle.entries,
-      color: subtitle.color,
-      backgroundColor: subtitle.backgroundColor,
-      fontSize: subtitle.fontSize,
-      fontFamily: subtitle.fontFamily
-    };
-    
-    // Enviar subtítulos al servidor
-    axios.post(`${apiUrl}/${videoId}/subtitles`, subtitleData)
       .then(response => {
-        console.log(`Subtítulos en ${subtitle.language} subidos correctamente:`, response.data);
+        const videoId = response.data.video.id;
+        setUploadSuccess(true);
+        setUploadedVideoUrl(response.data.video.video_url || response.data.video.path);
+
+        console.log('Video subido exitosamente, ID:', videoId);
+
+        // Crear un array de promesas para todas las subidas adicionales
+        const uploadPromises = [];
+
+        // Subir subtítulos para cada idioma
+        subtitles.forEach(subtitle => {
+          console.log(`Procesando subtítulos para ${subtitle.language}:`, subtitle);
+          if (subtitle.entries && subtitle.entries.length > 0) {
+            uploadPromises.push(uploadSubtitle(videoId, subtitle));
+          } else {
+            console.log(`No hay entradas de subtítulos para ${subtitle.language}`);
+          }
+        });
+
+        // Subir pistas de audio para cada idioma
+        audioTracks.forEach(track => {
+          console.log(`Procesando audio para ${track.language}:`, track.file ? track.file.name : 'Sin archivo');
+          if (track.file) {
+            uploadPromises.push(uploadAudioTrack(videoId, track));
+          } else {
+            console.log(`No hay archivo de audio para ${track.language}`);
+          }
+        });
+
+        console.log(`Iniciando ${uploadPromises.length} subidas adicionales`);
+
+        // Esperar a que todas las subidas adicionales terminen
+        return Promise.allSettled(uploadPromises)
+          .then(results => {
+            const successful = results.filter(result => result.status === 'fulfilled');
+            const failed = results.filter(result => result.status === 'rejected');
+
+            console.log(`Subidas completadas: ${successful.length} exitosas, ${failed.length} fallidas`);
+
+            if (failed.length > 0) {
+              failed.forEach((result, index) => {
+                console.error(`Subida ${index + 1} falló:`, result.reason);
+              });
+              
+              // Si hay fallos, eliminar el video subido para evitar datos incompletos
+              console.log('Eliminando video debido a fallos en subidas adicionales...');
+              axios.delete(`${apiUrl}/${videoId}`)
+                .then(() => {
+                  console.log('Video eliminado exitosamente debido a fallos');
+                })
+                .catch(deleteError => {
+                  console.error('Error al eliminar video:', deleteError);
+                });
+              
+              setUploadError(`Subida cancelada. Fallos detectados: ${failed.length} de ${results.length}. El video no se guardó.`);
+              setUploadSuccess(false);
+            } else {
+              console.log('Todas las subidas completadas exitosamente');
+            }
+          })
+          .finally(() => {
+            setIsUploading(false);
+          });
       })
       .catch(error => {
-        console.error(`Error al subir subtítulos en ${subtitle.language}:`, error);
+        setIsUploading(false);
+        setUploadError(`Error en la subida del video: ${error.message}`);
+        console.error('Error uploading video:', error);
       });
   };
-  
+
   // Subir pista de audio
   const uploadAudioTrack = (videoId, track) => {
-    if (!track.file) return;
-    
+    if (!track.file) {
+      console.log(`No hay archivo de audio para ${track.language}`);
+      return Promise.resolve();
+    }
+
+    // Validar tamaño antes de subir
+    const maxAudioSize = 50 * 1024 * 1024; // 50MB
+    if (track.file.size > maxAudioSize) {
+      const error = new Error(`Archivo de audio demasiado grande: ${formatFileSize(track.file.size)}. Máximo: ${formatFileSize(maxAudioSize)}`);
+      console.error(`Error de tamaño para audio ${track.language}:`, error.message);
+      return Promise.reject(error);
+    }
+
     const formData = new FormData();
     formData.append('audio', track.file);
     formData.append('language', track.language);
-    
-    axios.post(`${apiUrl}/${videoId}/audio`, formData, {
+
+    console.log(`Enviando audio para ${track.language}:`, track.file.name, `(${formatFileSize(track.file.size)})`);
+
+    return axios.post(`${apiUrl}/${videoId}/audio`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
       .then(response => {
         console.log(`Pista de audio en ${track.language} subida correctamente:`, response.data);
+        return response.data;
       })
       .catch(error => {
         console.error(`Error al subir pista de audio en ${track.language}:`, error);
+        if (error.response) {
+          console.error('Respuesta del servidor:', error.response.data);
+          console.error('Status:', error.response.status);
+        }
+        throw error;
       });
+  };
+  
+  // Subir subtítulos al servidor
+  const uploadSubtitle = async (videoId, subtitle) => {
+    try {
+      const response = await axios.post(`${apiUrl}/${videoId}/subtitles`, {
+        language: subtitle.language,
+        entries: subtitle.entries,
+        textColor: subtitle.color,
+        backgroundColor: subtitle.backgroundColor,
+        fontSize: subtitle.fontSize,
+        fontFamily: subtitle.fontFamily || subtitle.fontFile
+      });
+      
+      console.log(`Subtítulos para ${subtitle.language} subidos correctamente:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`Error al subir subtítulos para ${subtitle.language}:`, error);
+      throw error;
+    }
+  };
+  
+  // Resetear video y limpiar estado
+  const resetVideo = () => {
+    // Limpiar archivo de video
+    setVideoFile(null);
+    setVideoPreview(null);
+    setIsPlaying(false);
+    
+    // Limpiar metadatos
+    setVideoName('');
+    setVideoSize(0);
+    setVideoDuration(0);
+    setVideoFormat('');
+    
+    // Limpiar estado de subida
+    setUploadProgress(0);
+    setUploadSuccess(false);
+    setUploadError('');
+    setIsUploading(false);
+    setUploadedVideoUrl('');
+    
+    // Resetear subtítulos
+    setSubtitles([
+      { 
+        id: 1, 
+        language: 'es', 
+        entries: [], 
+        vttUrl: null, 
+        fileName: null,
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        fontSize: '18px',
+        fontFile: null,
+        fontUrl: null
+      },
+      { 
+        id: 2, 
+        language: 'en', 
+        entries: [], 
+        vttUrl: null, 
+        fileName: null,
+        color: '#ffffff',
+        backgroundColor: '#000000',
+        fontSize: '18px',
+        fontFile: null,
+        fontUrl: null
+      }
+    ]);
+    
+    // Resetear pistas de audio
+    setAudioTracks([
+      {
+        id: 'en-audio',
+        language: 'en',
+        file: null,
+        url: undefined,
+        mimeType: undefined
+      },
+      {
+        id: 'es-audio',
+        language: 'es',
+        file: null,
+        url: undefined,
+        mimeType: undefined
+      }
+    ]);
+    
+    // Limpiar edición de subtítulos
+    setCurrentSubtitle(null);
+    setEditingSubtitle(false);
+    
+    // Resetear audio activo
+    setActiveAudioTrack('original');
   };
   
   // Actualizar entrada de subtítulo
@@ -641,6 +786,442 @@ const VideoUpload = () => {
     }
   };
 
+  // Editar subtítulo
+  const editSubtitle = (language) => {
+    const subtitle = subtitles.find(sub => sub.language === language);
+    if (subtitle) {
+      // Crear una copia profunda para evitar modificar el original hasta guardar
+      setCurrentSubtitle({
+        ...subtitle,
+        entries: subtitle.entries.map(entry => ({ ...entry }))
+      });
+      setEditingSubtitle(true);
+    }
+  };
+
+  // Añadir entrada de subtítulo
+  const addSubtitleEntry = () => {
+    if (currentSubtitle) {
+      setCurrentSubtitle(prev => ({
+        ...prev,
+        entries: [
+          ...prev.entries,
+          {
+            startTime: 0,
+            endTime: videoDuration > 5 ? 5 : videoDuration,
+            text: ''
+          }
+        ]
+      }));
+    }
+  };
+
+  // Eliminar entrada de subtítulo
+  const removeSubtitleEntry = (index) => {
+    if (currentSubtitle && currentSubtitle.entries.length > index) {
+      setCurrentSubtitle(prev => ({
+        ...prev,
+        entries: prev.entries.filter((_, i) => i !== index)
+      }));
+    }
+  };
+
+  // Generar archivo VTT
+  const generateVTT = (language) => {
+    const subtitle = subtitles.find(sub => sub.language === language);
+    
+    if (subtitle && subtitle.entries.length > 0) {
+      // Limpiar URL anterior si existe
+      if (subtitle.vttUrl) {
+        URL.revokeObjectURL(subtitle.vttUrl);
+      }
+      
+      // Generar contenido VTT
+      let vttContent = 'WEBVTT\n\n';
+      
+      subtitle.entries.forEach((entry, index) => {
+        const startTime = formatTimeForVTT(entry.startTime);
+        const endTime = formatTimeForVTT(entry.endTime);
+        
+        vttContent += `${index + 1}\n`;
+        vttContent += `${startTime} --> ${endTime}\n`;
+        vttContent += `${entry.text}\n\n`;
+      });
+      
+      // Crear blob URL
+      const blob = new Blob([vttContent], { type: 'text/vtt' });
+      const vttUrl = URL.createObjectURL(blob);
+      
+      // Actualizar estado
+      setSubtitles(prevSubtitles => {
+        return prevSubtitles.map(sub => {
+          if (sub.language === language) {
+            return {
+              ...sub,
+              vttUrl: vttUrl
+            };
+          }
+          return sub;
+        });
+      });
+    }
+  };
+
+  // Formatear tiempo para VTT (HH:MM:SS.mmm)
+  const formatTimeForVTT = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    const milliseconds = Math.floor((seconds % 1) * 1000);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+  };
+
+  // Actualizar estilos de subtítulos en el servidor
+  const updateSubtitleStyling = async (videoId, textColor, backgroundColor) => {
+    try {
+      const response = await axios.put(`${apiUrl}/${videoId}/subtitle-styling`, {
+        textColor,
+        backgroundColor
+      });
+      console.log('Estilos de subtítulos actualizados:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error actualizando estilos de subtítulos:', error);
+      throw error;
+    }
+  };
+
+  // Manejar selección de archivo VTT
+  const handleVTTFileSelected = (event, language) => {
+    const file = event.target.files[0];
+    
+    if (!file) return;
+    
+    // Validar que sea un archivo VTT
+    if (!file.name.toLowerCase().endsWith('.vtt')) {
+      alert('Por favor selecciona un archivo VTT válido');
+      return;
+    }
+    
+    // Leer el contenido del archivo VTT
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const vttContent = e.target.result;
+      
+      try {
+        // Parsear el contenido VTT y extraer las entradas
+        const entries = parseVTTContent(vttContent);
+        
+        // Crear URL del blob para el archivo VTT
+        const blob = new Blob([vttContent], { type: 'text/vtt' });
+        const vttUrl = URL.createObjectURL(blob);
+        
+        // Actualizar el estado de subtítulos
+        setSubtitles(prevSubtitles => {
+          return prevSubtitles.map(subtitle => {
+            if (subtitle.language === language) {
+              // Limpiar URL anterior si existe
+              if (subtitle.vttUrl) {
+                URL.revokeObjectURL(subtitle.vttUrl);
+              }
+              
+              return {
+                ...subtitle,
+                entries: entries,
+                vttUrl: vttUrl,
+                fileName: file.name
+              };
+            }
+            return subtitle;
+          });
+        });
+        
+        console.log(`Archivo VTT cargado para ${language}:`, file.name);
+        console.log(`Entradas extraídas:`, entries);
+        
+      } catch (error) {
+        console.error('Error al parsear el archivo VTT:', error);
+        alert('Error al procesar el archivo VTT. Verifica que el formato sea correcto.');
+      }
+    };
+    
+    reader.onerror = () => {
+      console.error('Error al leer el archivo VTT');
+      alert('Error al leer el archivo VTT');
+    };
+    
+    reader.readAsText(file);
+    
+    // Limpiar el input para permitir seleccionar el mismo archivo nuevamente
+    event.target.value = '';
+  };
+
+  // Parsear contenido VTT y extraer entradas
+  const parseVTTContent = (vttContent) => {
+    const lines = vttContent.split('\n');
+    const entries = [];
+    let currentEntry = null;
+    
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      
+      // Saltar líneas vacías y la cabecera WEBVTT
+      if (!line || line === 'WEBVTT') continue;
+      
+      // Detectar línea de tiempo (formato: 00:00:00.000 --> 00:00:00.000)
+      if (line.includes('-->')) {
+        const timeMatch = line.match(/(\d{2}:\d{2}:\d{2}\.\d{3})\s*-->\s*(\d{2}:\d{2}:\d{2}\.\d{3})/);
+        
+        if (timeMatch) {
+          // Guardar entrada anterior si existe
+          if (currentEntry && currentEntry.text.trim()) {
+            entries.push(currentEntry);
+          }
+          
+          // Crear nueva entrada
+          currentEntry = {
+            startTime: parseVTTTime(timeMatch[1]),
+            endTime: parseVTTTime(timeMatch[2]),
+            text: ''
+          };
+        }
+      }
+      // Si tenemos una entrada actual y la línea no es un número (índice), es texto
+      else if (currentEntry && line && !/^\d+$/.test(line)) {
+        if (currentEntry.text) {
+          currentEntry.text += '\n' + line;
+        } else {
+          currentEntry.text = line;
+        }
+      }
+    }
+    
+    // Agregar la última entrada si existe
+    if (currentEntry && currentEntry.text.trim()) {
+      entries.push(currentEntry);
+    }
+    
+    return entries;
+  };
+
+  // Convertir tiempo VTT (HH:MM:SS.mmm) a segundos
+  const parseVTTTime = (timeString) => {
+    const parts = timeString.split(':');
+    const hours = parseInt(parts[0], 10);
+    const minutes = parseInt(parts[1], 10);
+    const secondsParts = parts[2].split('.');
+    const seconds = parseInt(secondsParts[0], 10);
+    const milliseconds = parseInt(secondsParts[1], 10);
+    
+    return hours * 3600 + minutes * 60 + seconds + milliseconds / 1000;
+  };
+
+  // Eliminar subtítulos
+  const removeSubtitles = (language) => {
+    setSubtitles(prevSubtitles => {
+      return prevSubtitles.map(subtitle => {
+        if (subtitle.language === language) {
+          // Limpiar URL del blob si existe
+          if (subtitle.vttUrl) {
+            URL.revokeObjectURL(subtitle.vttUrl);
+          }
+          
+          return {
+            ...subtitle,
+            entries: [],
+            vttUrl: null,
+            fileName: null
+          };
+        }
+        return subtitle;
+      });
+    });
+    
+    // Desactivar subtítulos si estaban activos
+    setActiveSubtitles(prev => ({
+      ...prev,
+      [language]: false
+    }));
+    
+    console.log(`Subtítulos eliminados para ${language}`);
+  };
+
+  // Función para actualizar colores de todos los subtítulos
+  const updateAllSubtitleColors = (colorType, value) => {
+    setSubtitles(prevSubtitles => {
+      const updatedSubtitles = prevSubtitles.map(subtitle => ({ ...subtitle, [colorType]: value }));
+      
+      // Aplicar estilos CSS inmediatamente después de actualizar el estado
+      setTimeout(() => {
+        const textColor = colorType === 'color' ? value : updatedSubtitles[0]?.color || '#ffffff';
+        const bgColor = colorType === 'backgroundColor' ? value : updatedSubtitles[0]?.backgroundColor || '#000000';
+        const fontSize = updatedSubtitles[0]?.fontSize || '18px';
+        const fontUrl = updatedSubtitles[0]?.fontUrl;
+        applySubtitleStylesToVideo(textColor, bgColor, fontSize, fontUrl);
+      }, 0);
+      
+      return updatedSubtitles;
+    });
+  };
+
+  // Función para actualizar tamaño de fuente de todos los subtítulos
+  const updateAllSubtitleFontSize = (fontSize) => {
+    setSubtitles(prevSubtitles => {
+      const updatedSubtitles = prevSubtitles.map(subtitle => ({ ...subtitle, fontSize }));
+      
+      // Aplicar estilos CSS inmediatamente
+      setTimeout(() => {
+        const textColor = updatedSubtitles[0]?.color || '#ffffff';
+        const bgColor = updatedSubtitles[0]?.backgroundColor || '#000000';
+        const fontUrl = updatedSubtitles[0]?.fontUrl;
+        applySubtitleStylesToVideo(textColor, bgColor, fontSize, fontUrl);
+      }, 0);
+      
+      return updatedSubtitles;
+    });
+  };
+
+  // Función para manejar subida de archivo de fuente TTF
+  const handleFontFileSelected = async (event) => {
+    const file = event.target.files[0];
+    
+    if (!file) return;
+    
+    // Validar que sea un archivo TTF
+    if (!file.name.toLowerCase().endsWith('.ttf')) {
+      alert('Por favor selecciona un archivo TTF válido');
+      return;
+    }
+    
+    try {
+      // Crear URL del blob para la fuente
+      const fontUrl = URL.createObjectURL(file);
+      
+      // Crear elemento de estilo para cargar la fuente
+      const fontFace = new FontFace('CustomSubtitleFont', `url(${fontUrl})`);
+      await fontFace.load();
+      document.fonts.add(fontFace);
+      
+      // Actualizar estado de subtítulos
+      setSubtitles(prevSubtitles => {
+        const updatedSubtitles = prevSubtitles.map(subtitle => ({ 
+          ...subtitle, 
+          fontFile: file.name,
+          fontUrl: fontUrl
+        }));
+        
+        // Aplicar estilos CSS inmediatamente
+        setTimeout(() => {
+          const textColor = updatedSubtitles[0]?.color || '#ffffff';
+          const bgColor = updatedSubtitles[0]?.backgroundColor || '#000000';
+          const fontSize = updatedSubtitles[0]?.fontSize || '18px';
+          applySubtitleStylesToVideo(textColor, bgColor, fontSize, fontUrl);
+        }, 0);
+        
+        return updatedSubtitles;
+      });
+      
+      console.log(`Fuente TTF cargada: ${file.name}`);
+      
+    } catch (error) {
+      console.error('Error al cargar la fuente:', error);
+      alert('Error al cargar el archivo de fuente. Verifica que sea un archivo TTF válido.');
+    }
+    
+    // Limpiar el input
+    event.target.value = '';
+  };
+
+  // Función para aplicar estilos CSS directamente a los subtítulos del video
+  const applySubtitleStylesToVideo = (textColor, backgroundColor, fontSize = '18px', fontUrl = null) => {
+    // Crear o actualizar estilos CSS para los subtítulos
+    let styleElement = document.getElementById('subtitle-styles');
+    if (!styleElement) {
+      styleElement = document.createElement('style');
+      styleElement.id = 'subtitle-styles';
+      document.head.appendChild(styleElement);
+    }
+    
+    const fontFamily = fontUrl ? 'CustomSubtitleFont' : 'Arial';
+    
+    styleElement.textContent = `
+      video::cue {
+        color: ${textColor} !important;
+        background: ${backgroundColor} !important;
+        font-size: ${fontSize} !important;
+        font-family: ${fontFamily} !important;
+        font-weight: bold !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        box-decoration-break: clone !important;
+        -webkit-box-decoration-break: clone !important;
+      }
+      
+      video::-webkit-media-text-track-display {
+        background: transparent !important;
+      }
+      
+      video::-webkit-media-text-track-container {
+        background: transparent !important;
+      }
+      
+      .main-video::cue {
+        color: ${textColor} !important;
+        background: ${backgroundColor} !important;
+        font-size: ${fontSize} !important;
+        font-family: ${fontFamily} !important;
+        font-weight: bold !important;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8) !important;
+        padding: 2px 6px !important;
+        border-radius: 3px !important;
+        box-decoration-break: clone !important;
+        -webkit-box-decoration-break: clone !important;
+      }
+      
+      .main-video::-webkit-media-text-track-display {
+        background: transparent !important;
+      }
+      
+      .main-video::-webkit-media-text-track-container {
+        background: transparent !important;
+      }
+    `;
+    
+    // Forzar actualización de las pistas de subtítulos
+    if (videoRef.current) {
+      const tracks = videoRef.current.textTracks;
+      for (let i = 0; i < tracks.length; i++) {
+        const track = tracks[i];
+        if (track.mode === 'showing') {
+          // Forzar re-renderizado desactivando y reactivando
+          track.mode = 'hidden';
+          setTimeout(() => {
+            track.mode = 'showing';
+          }, 10);
+        }
+      }
+    }
+  };
+
+  // Actualizar colores de subtítulos (función simplificada, ya no se usa)
+  const updateSubtitleColor = (language, colorType, value) => {
+    setSubtitles(prevSubtitles => {
+      return prevSubtitles.map(subtitle => {
+        if (subtitle.language === language) {
+          return {
+            ...subtitle,
+            [colorType]: value
+          };
+        }
+        return subtitle;
+      });
+    });
+    
+    console.log(`Color ${colorType} actualizado para ${language}: ${value}`);
+  };
+
   return (
     <div className="video-upload-container">
       <TangramLoader isLoading={isUploading} onSkip={() => setIsUploading(false)} />
@@ -664,98 +1245,112 @@ const VideoUpload = () => {
         <div className="preview-section">
           <h2>Vista Previa del Video</h2>
           <div className="video-preview">
-            {/* Video con audio original (se oculta cuando hay audio personalizado) */}
-            {!audioTracks.some(track => track.url) && (
-              <video 
-                ref={videoRef} 
-                src={videoPreview} 
-                controls
-                className="main-video"
-              >
-                {subtitles.map(subtitle => 
-                  subtitle.vttUrl && (
-                    <track 
-                      key={subtitle.id}
-                      src={subtitle.vttUrl} 
-                      label={subtitle.language === 'en' ? 'English' : 'Español'} 
-                      srcLang={subtitle.language} 
-                      default={subtitle.language === 'en'}
-                      kind="subtitles"
-                    />
-                  )
-                )}
-              </video>
+            {/* Video principal */}
+            <video 
+              ref={videoRef} 
+              src={videoPreview} 
+              controls
+              className="main-video"
+              muted={activeAudioTrack !== 'original'}
+              onPlay={() => {
+                // Pausar todos los audios primero
+                audioTracks.forEach(track => {
+                  if (track.url) {
+                    const audio = document.querySelector(`.audio-track-${track.language}`);
+                    if (audio) {
+                      audio.pause();
+                    }
+                  }
+                });
+                
+                // Sincronizar reproducción de audio cuando se inicia el video
+                if (activeAudioTrack !== 'original') {
+                  const activeAudio = document.querySelector(`.audio-track-${activeAudioTrack}`);
+                  if (activeAudio) {
+                    activeAudio.currentTime = videoRef.current.currentTime;
+                    activeAudio.play();
+                  }
+                }
+              }}
+              onPause={() => {
+                // Pausar todos los audios
+                audioTracks.forEach(track => {
+                  if (track.url) {
+                    const audio = document.querySelector(`.audio-track-${track.language}`);
+                    if (audio) {
+                      audio.pause();
+                    }
+                  }
+                });
+              }}
+              onSeeked={() => {
+                // Sincronizar posición del audio cuando se busca en el video
+                if (activeAudioTrack !== 'original') {
+                  const activeAudio = document.querySelector(`.audio-track-${activeAudioTrack}`);
+                  if (activeAudio) {
+                    activeAudio.currentTime = videoRef.current.currentTime;
+                  }
+                }
+              }}
+            >
+              {subtitles.map(subtitle => 
+                subtitle.vttUrl && (
+                  <track 
+                    key={subtitle.id}
+                    src={subtitle.vttUrl} 
+                    label={subtitle.language === 'en' ? 'English' : 'Español'} 
+                    srcLang={subtitle.language} 
+                    default={activeSubtitles[subtitle.language]}
+                    kind="subtitles"
+                  />
+                )
+              )}
+            </video>
+            
+            {/* Audios personalizados (ocultos pero sincronizados con el video) */}
+            {audioTracks.map(track => 
+              track.url && (
+                <audio 
+                  key={track.id}
+                  src={track.url} 
+                  className={`audio-track-${track.language}`}
+                  style={{ display: 'none' }}
+                />
+              )
             )}
             
-            {/* Video con audio personalizado */}
-            {audioTracks.some(track => track.url) && (
-              <div className="video-with-custom-audio">
-                <video 
-                  ref={videoRef} 
-                  src={videoPreview} 
-                  controls
-                  className="main-video"
-                  muted={true} // Silenciar el video original
-                  onPlay={() => {
-                    // Sincronizar reproducción de audio cuando se inicia el video
-                    const activeAudio = document.querySelector('.custom-audio-track');
-                    if (activeAudio) {
-                      activeAudio.currentTime = videoRef.current.currentTime;
-                      activeAudio.play();
-                    }
-                  }}
-                  onPause={() => {
-                    // Pausar audio cuando se pausa el video
-                    const activeAudio = document.querySelector('.custom-audio-track');
-                    if (activeAudio) {
-                      activeAudio.pause();
-                    }
-                  }}
-                  onSeeked={() => {
-                    // Sincronizar posición del audio cuando se busca en el video
-                    const activeAudio = document.querySelector('.custom-audio-track');
-                    if (activeAudio) {
-                      activeAudio.currentTime = videoRef.current.currentTime;
-                    }
-                  }}
+            {/* Controles de selección de audio */}
+            <div className="audio-controls">
+              <h4>Seleccionar Audio</h4>
+              <div className="audio-selector">
+                <button 
+                  className={`btn ${activeAudioTrack === 'original' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => switchAudioTrack('original')}
                 >
-                  {subtitles.map(subtitle => 
-                    subtitle.vttUrl && (
-                      <track 
-                        key={subtitle.id}
-                        src={subtitle.vttUrl} 
-                        label={subtitle.language === 'en' ? 'English' : 'Español'} 
-                        srcLang={subtitle.language} 
-                        default={activeSubtitles[subtitle.language]}
-                        kind="subtitles"
-                      />
-                    )
-                  )}
-                </video>
+                  Audio Original
+                </button>
                 
-                {/* Audio personalizado (oculto pero sincronizado con el video) */}
                 {audioTracks.map(track => 
                   track.url && (
-                    <audio 
-                      key={track.id}
-                      src={track.url} 
-                      className="custom-audio-track"
-                      style={{ display: 'none' }}
-                    />
+                    <button 
+                      key={`selector-${track.id}`}
+                      className={`btn ${activeAudioTrack === track.language ? 'btn-primary' : 'btn-secondary'}`}
+                      onClick={() => switchAudioTrack(track.language)}
+                    >
+                      {track.language === 'en' ? 'Audio en Inglés' : 'Audio en Español'}
+                    </button>
                   )
                 )}
-                
-                <div className="custom-audio-info">
-                  <span className="audio-badge">Audio personalizado activo</span>
-                  {audioTracks.filter(track => track.url).map(track => (
-                    <div key={track.id} className="audio-track-info">
-                      <span>{track.language === 'en' ? 'Audio en inglés' : 'Audio en español'}</span>
-                      <span className="audio-filename">{track.name}</span>
-                    </div>
-                  ))}
-                </div>
               </div>
-            )}
+              
+              {activeAudioTrack !== 'original' && (
+                <div className="active-audio-info">
+                  <span className="audio-badge">
+                    Reproduciendo: {activeAudioTrack === 'en' ? 'Audio en Inglés' : 'Audio en Español'}
+                  </span>
+                </div>
+              )}
+            </div>
             
             {/* Controles de subtítulos */}
             {subtitles.some(subtitle => subtitle.vttUrl) && (
@@ -806,25 +1401,41 @@ const VideoUpload = () => {
                       {activeSubtitles[subtitle.language] ? 'Visibles' : 'Ocultos'}
                     </span>
                   )}
+                  {subtitle.fileName && (
+                    <span className="file-info">
+                      📄 {subtitle.fileName}
+                    </span>
+                  )}
+                  {subtitle.entries && subtitle.entries.length > 0 && (
+                    <span className="entries-count">
+                      {subtitle.entries.length} entradas
+                    </span>
+                  )}
                 </div>
                 
                 <div className="subtitle-actions">
+                  {/* Subir archivo VTT */}
+                  <div className="vtt-upload-section">
+                    <input 
+                      type="file" 
+                      id={`vtt-input-${subtitle.language}`}
+                      accept=".vtt"
+                      onChange={(e) => handleVTTFileSelected(e, subtitle.language)}
+                      className="file-input" 
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor={`vtt-input-${subtitle.language}`} className="btn btn-primary">
+                      Subir Archivo VTT
+                    </label>
+                  </div>
+                  
                   <button 
                     onClick={() => generateAutomaticSubtitles(subtitle.language)} 
-                    className="btn btn-primary"
+                    className="btn btn-secondary"
                     disabled={!videoPreview}
                   >
-                    Generar Subtítulos Automáticos
+                    Generar Automáticamente
                   </button>
-                  
-                  {subtitle.entries && subtitle.entries.length > 0 && (
-                    <button 
-                      onClick={() => generateSubtitles(subtitle.language)} 
-                      className="btn btn-success"
-                    >
-                      Aplicar al Video
-                    </button>
-                  )}
                   
                   {subtitle.vttUrl && (
                     <>
@@ -836,17 +1447,104 @@ const VideoUpload = () => {
                       </button>
                       
                       <button 
-                        onClick={() => previewSubtitles(subtitle.language)} 
-                        className="btn btn-info"
+                        onClick={() => removeSubtitles(subtitle.language)} 
+                        className="btn btn-danger"
                       >
-                        Vista Previa
+                        Eliminar
                       </button>
                     </>
                   )}
                 </div>
+                
               </div>
             ))}
           </div>
+          
+          {/* Controles globales de estilo de subtítulos */}
+          {subtitles.some(subtitle => subtitle.vttUrl) && (
+            <div className="global-subtitle-colors">
+              <h3>Personalizar Estilo de Subtítulos</h3>
+              <div className="subtitle-color-controls">
+                <div className="color-controls-grid">
+                  <div className="color-control">
+                    <label htmlFor="globalTextColor">Color de Texto:</label>
+                    <input 
+                      type="color" 
+                      id="globalTextColor"
+                      value={subtitles[0].color} 
+                      onChange={(e) => updateAllSubtitleColors('color', e.target.value)} 
+                    />
+                    <span className="color-value">{subtitles[0].color}</span>
+                  </div>
+                  
+                  <div className="color-control">
+                    <label htmlFor="globalBgColor">Color de Fondo:</label>
+                    <input 
+                      type="color" 
+                      id="globalBgColor"
+                      value={subtitles[0].backgroundColor} 
+                      onChange={(e) => updateAllSubtitleColors('backgroundColor', e.target.value)} 
+                    />
+                    <span className="color-value">{subtitles[0].backgroundColor}</span>
+                  </div>
+                  
+                  <div className="color-control">
+                    <label htmlFor="globalFontSize">Tamaño de Fuente:</label>
+                    <select 
+                      id="globalFontSize"
+                      value={subtitles[0].fontSize} 
+                      onChange={(e) => updateAllSubtitleFontSize(e.target.value)}
+                      className="font-size-selector"
+                    >
+                      {fontSizes.map(size => (
+                        <option key={size} value={size}>{size}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="color-control">
+                    <label htmlFor="globalFontFile">Fuente Personalizada (.ttf):</label>
+                    <input 
+                      type="file" 
+                      id="globalFontFile"
+                      accept=".ttf"
+                      onChange={handleFontFileSelected}
+                      className="file-input" 
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="globalFontFile" className="btn btn-secondary">
+                      {subtitles[0].fontFile ? subtitles[0].fontFile : 'Subir Fuente TTF'}
+                    </label>
+                  </div>
+                </div>
+                
+                {/* Vista previa de estilos */}
+                <div className="color-preview">
+                  <div 
+                    className="subtitle-color-sample"
+                    style={{
+                      color: subtitles[0].color,
+                      backgroundColor: subtitles[0].backgroundColor,
+                      fontSize: subtitles[0].fontSize,
+                      fontFamily: subtitles[0].fontUrl ? 'CustomSubtitleFont' : 'Arial',
+                      padding: '8px 12px',
+                      borderRadius: '4px',
+                      display: 'inline-block',
+                      fontWeight: 'bold',
+                      border: '1px solid #ccc'
+                    }}
+                  >
+                    Ejemplo de subtítulo
+                  </div>
+                  {subtitles[0].fontFile && (
+                    <div className="font-info">
+                      <small>Fuente: {subtitles[0].fontFile}</small>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
           
           {/* Sección de Pistas de Audio */}
           <div className="audio-tracks-section">

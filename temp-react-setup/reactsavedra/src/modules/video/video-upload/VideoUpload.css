@@ -332,3 +332,261 @@
 .subtitle-preview {
   color: #000000 !important; /* Texto negro */
 }
+
+/* Estilos para controles integrados de video */
+.video-controls-overlay {
+  position: relative;
+  margin-top: 10px;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.9));
+  border-radius: 8px;
+  padding: 12px 16px;
+  backdrop-filter: blur(5px);
+}
+
+.integrated-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.audio-controls-integrated,
+.subtitle-controls-integrated {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-icon {
+  font-size: 16px;
+  color: #ffffff;
+}
+
+.native-style-selector {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  padding: 6px 12px;
+  font-size: 14px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.native-style-selector:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.native-style-selector:focus {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+}
+
+.native-style-selector option {
+  background: #333;
+  color: #fff;
+  padding: 8px;
+}
+
+.subtitle-toggles {
+  display: flex;
+  gap: 6px;
+}
+
+.subtitle-toggle-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: #ffffff;
+  padding: 6px 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.subtitle-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.subtitle-toggle-btn.active {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  color: #ffffff;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.3);
+}
+
+.subtitle-toggle-btn.active:hover {
+  background: #357abf;
+  border-color: #357abf;
+}
+
+/* Responsive design para controles integrados */
+@media (max-width: 768px) {
+  .integrated-controls {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .audio-controls-integrated,
+  .subtitle-controls-integrated {
+    justify-content: center;
+  }
+  
+  .native-style-selector {
+    width: 100%;
+    max-width: 200px;
+  }
+}
+
+/* Estilos para controles de color de subtítulos */
+.subtitle-color-controls {
+  margin-top: 15px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.subtitle-color-controls h5 {
+  margin: 0 0 15px 0;
+  color: #495057;
+  font-size: 16px;
+}
+
+.color-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.color-control {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.color-control label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 14px;
+}
+
+.color-control input[type="color"] {
+  width: 60px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 0;
+  background: none;
+}
+
+.color-control input[type="color"]:hover {
+  border-color: #4a90e2;
+}
+
+.color-value {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+  color: #6c757d;
+  background-color: #f8f9fa;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid #dee2e6;
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+}
+
+.color-preview {
+  text-align: center;
+  padding: 15px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.subtitle-color-sample {
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+  transition: all 0.2s ease;
+}
+
+/* Estilos para selector de tamaño de fuente */
+.font-size-selector {
+  padding: 8px 12px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #ffffff;
+  font-size: 14px;
+  cursor: pointer;
+  min-width: 80px;
+}
+
+.font-size-selector:hover {
+  border-color: #4a90e2;
+}
+
+.font-size-selector:focus {
+  outline: none;
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+/* Información de fuente */
+.font-info {
+  margin-top: 8px;
+  text-align: center;
+}
+
+.font-info small {
+  color: #6c757d;
+  font-style: italic;
+}
+
+/* Actualizar grid para 4 columnas */
+.color-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+/* Responsive para controles de color */
+@media (max-width: 900px) {
+  .color-controls-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .color-controls-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .color-control {
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  
+  .color-control label {
+    flex: 1;
+  }
+  
+  .color-control input[type="color"] {
+    width: 50px;
+    height: 35px;
+  }
+}
