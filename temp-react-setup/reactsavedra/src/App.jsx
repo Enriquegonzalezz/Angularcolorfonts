@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react'
 import './App.css'
 
 // Importamos los contextos que hemos creado
-import { AuthProvider } from './services/AuthContext'
+import { AuthProvider, useAuth } from './services/AuthContext'
 import { StyleProvider } from './services/StyleContext'
 
 // Importamos los componentes que ya hemos migrado
@@ -28,8 +28,10 @@ import ImageUpload from './modules/image/image-upload/ImageUpload'
 import Tangram from './tangram/Tangram'
 import TangramLoader from './components/tangram-loader/TangramLoader'
 
-function App() {
+// Component interno que tiene acceso al AuthContext
+function AppContent() {
   const [initialLoading, setInitialLoading] = useState(true);
+  const { getUserId } = useAuth();
 
   // Simulate initial loading
   useEffect(() => {
@@ -40,10 +42,8 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <StyleProvider>
-        <div className="app-container">
-          <TangramLoader isLoading={initialLoading} onSkip={() => setInitialLoading(false)} />
+    <div className="app-container">
+      <TangramLoader isLoading={initialLoading} onSkip={() => setInitialLoading(false)} userId={getUserId()} />
           <Navbar />
           <main className="main-content">
             <Routes>
@@ -76,9 +76,17 @@ function App() {
           </main>
          
         </div>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <StyleProvider>
+        <AppContent />
       </StyleProvider>
     </AuthProvider>
-  )
+  );
 }
 
 export default App

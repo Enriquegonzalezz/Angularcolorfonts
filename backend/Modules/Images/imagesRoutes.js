@@ -24,8 +24,8 @@ const createImagesRouter = () => {
   // Upload image
   imagesRouter.post('/upload', upload.single('image'), imagesController.uploadImage);
 
-  // Get all images for a user
-  imagesRouter.get('/user/:userId', imagesController.getUserImages);
+  // Get all images for a user (supports ?selected=1 query parameter)
+  imagesRouter.get('/', imagesController.getUserImages);
 
   // Get image by ID
   imagesRouter.get('/:imageId', imagesController.getImageById);
@@ -36,8 +36,8 @@ const createImagesRouter = () => {
   // Delete image
   imagesRouter.delete('/:imageId', imagesController.deleteImage);
 
-  // Toggle image selection for user
-  imagesRouter.post('/:imageId/toggle-selection', imagesController.toggleImageSelection);
+  // Set image selection status (supports multi-selection)
+  imagesRouter.put('/:imageId/select', imagesController.setImageSelection);
 
   // Get selected image for user
   imagesRouter.get('/user/:userId/selected', imagesController.getSelectedImage);

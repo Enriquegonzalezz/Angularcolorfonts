@@ -73,7 +73,7 @@ const ImageUpload = () => {
     }
     
     setIsLoadingImages(true);
-    axios.get(`http://localhost:3000/images/user/${id}`)
+    axios.get(`http://localhost:3000/images?userId=${id}`)
       .then(response => {
         setUserImages(response.data.images);
         setIsLoadingImages(false);
@@ -289,14 +289,44 @@ const ImageUpload = () => {
   };
   
   // Alternar selección de imagen
-  const toggleImageSelection = (imageId) => {
-    setUserImages(prevImages => 
-      prevImages.map(img => 
-        img.id === imageId 
-          ? { ...img, selected: !img.selected } 
-          : img
-      )
-    );
+  const toggleImageSelection = async (imageId) => {
+    const userId = getUserId();
+    if (!userId) {
+      console.error('No user ID available for selection');
+      return;
+    }
+
+    // Encontrar la imagen actual para obtener su estado de selección
+    const currentImage = userImages.find(img => img.id === imageId);
+    if (!currentImage) {
+      console.error('Image not found');
+      return;
+    }
+
+    const newSelectionState = currentImage.selected ? 0 : 1;
+
+    try {
+      // Actualizar en el backend
+      const response = await axios.put(`http://localhost:3000/images/${imageId}/select`, {
+        userId: userId,
+        selected: newSelectionState
+      });
+
+      console.log('Selection updated:', response.data);
+
+      // Actualizar el estado local solo si la llamada al backend fue exitosa
+      setUserImages(prevImages => 
+        prevImages.map(img => 
+          img.id === imageId 
+            ? { ...img, selected: newSelectionState === 1 } 
+            : img
+        )
+      );
+    } catch (error) {
+      console.error('Error updating image selection:', error);
+      // Mostrar error al usuario
+      alert('Error al actualizar la selección de imagen');
+    }
   };
   
   // Eliminar imagen
@@ -307,10 +337,14 @@ const ImageUpload = () => {
 
   return (
     <div className="image-upload-container">
-      <TangramLoader isLoading={isUploading || isLoadingImages} onSkip={() => {
-        setIsUploading(false);
-        setIsLoadingImages(false);
-      }} />
+      <TangramLoader 
+        userId={getUserId()} 
+        isLoading={isUploading || isLoadingImages} 
+        onSkip={() => {
+          setIsUploading(false);
+          setIsLoadingImages(false);
+        }} 
+      />
       {!imagePreview && (
         <div className="upload-section">
           <h2>Subir Imagen</h2>

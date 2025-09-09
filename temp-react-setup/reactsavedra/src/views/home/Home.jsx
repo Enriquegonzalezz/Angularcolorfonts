@@ -50,31 +50,24 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Media Gallery Section */}
-      <section className="media-section" style={{ background: colors[0] }}>
-        <div className="container">
-          <h2 className="section-title" style={{ ...titleStyle, color: colors[1] }}>
-            Media Gallery
-          </h2>
-          <p className="section-subtitle" style={subtitleStyle}>
-            View our latest images and videos
-          </p>
-          <div className="media-gallery-preview">
-            <div className="media-item">Media preview content</div>
-            <div className="media-item">Media preview content</div>
-            <div className="media-item">Media preview content</div>
+      {/* Media Carousel Section */}
+      {isAuthenticated() && (
+        <section className="media-section" style={{ background: colors[0] }}>
+          <div className="container">
+            <h2 className="section-title" style={{ ...titleStyle, color: colors[1] }}>
+              Mis Medios Seleccionados
+            </h2>
+            <p className="section-subtitle" style={subtitleStyle}>
+              Imágenes y videos que has seleccionado
+            </p>
+            <MediaCarousel />
+            <div className="upload-buttons" style={{ marginTop: '20px' }}>
+              <Link to="/upload/image" className="btn btn-primary">Subir Imagen</Link>
+              <Link to="/upload/video" className="btn btn-secondary">Subir Video</Link>
+            </div>
           </div>
-          <div className="upload-buttons">
-            <Link to="/media" className="btn btn-primary">View Full Gallery</Link>
-            {isAuthenticated() && (
-              <>
-                <Link to="/upload/image" className="btn btn-primary">Upload Image</Link>
-                <Link to="/upload/video" className="btn btn-secondary">Upload Video</Link>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
    
 

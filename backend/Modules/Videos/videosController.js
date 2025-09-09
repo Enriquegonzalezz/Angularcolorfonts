@@ -74,8 +74,6 @@ class VideosController{
         tamano: req.file.size.toString(),
         extension: fileExtension.replace('.', ''),
         duracion: formattedDuration,
-        color_letra_subtitulo: '#ffffff',
-        fondo_subtitulo: '#000000',
         seleccionada: 0
       };
 
@@ -100,7 +98,7 @@ class VideosController{
   uploadSubtitles = async (req, res) => {
     try {
       const { videoId } = req.params;
-      const { language, entries, textColor, backgroundColor, fontSize, fontFamily } = req.body;
+      const { language, entries } = req.body;
       
       if (!videoId || !language || !entries || !Array.isArray(entries)) {
         return res.status(400).json({ message: 'Video ID, language, and subtitle entries array are required' });
@@ -136,16 +134,7 @@ class VideosController{
       const normalizedLanguage = language.toLowerCase() === 'es' || language.toLowerCase() === 'spanish' ? 'es' : 'en';
       await this.videosModel.updateSubtitle(parseInt(videoId), normalizedLanguage, fileName);
       
-      // Update subtitle styling if provided
-      if (textColor || backgroundColor || fontSize || fontFamily) {
-        await this.videosModel.updateSubtitleStyling(
-          parseInt(videoId), 
-          textColor || '#ffffff', 
-          backgroundColor || '#000000',
-          fontSize || '18px',
-          fontFamily || null
-        );
-      }
+      // Styling is no longer stored in DB; front uses default styles
       
       return res.status(201).json({
         message: 'Subtitles uploaded successfully',
@@ -241,11 +230,11 @@ class VideosController{
    */
   getAllVideos = async (req, res) => {
     try {
-      const { userId } = req.query;
+      const { userId, selected } = req.query;
       let videos;
-
+      
       if (userId) {
-        videos = await this.videosModel.getVideosByUser(parseInt(userId));
+        videos = await this.videosModel.getVideosByUser(parseInt(userId), selected ? parseInt(selected) : null);
       } else {
         videos = await this.videosModel.getAllVideos();
       }
@@ -359,95 +348,7 @@ class VideosController{
     }
   };
 
-  /**
-   * Update subtitle styling
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  updateSubtitleStyling = async (req, res) => {
-    try {
-      const { videoId } = req.params;
-      const { textColor, backgroundColor, fontSize, fontFile } = req.body;
-      
-      if (!textColor && !backgroundColor && !fontSize && !fontFile) {
-        return res.status(400).json({ message: 'At least one styling property is required' });
-      }
-      
-      const updatedVideo = await this.videosModel.updateSubtitleStyling(
-        parseInt(videoId),
-        textColor || '#ffffff',
-        backgroundColor || '#000000',
-        fontSize || '18px',
-        fontFile || null
-      );
-      
-      return res.status(200).json({
-        message: 'Subtitle styling updated successfully',
-        video: updatedVideo
-      });
-    } catch (error) {
-      console.error('Error updating subtitle styling:', error);
-      return res.status(500).json({ message: 'Failed to update subtitle styling', error: error.message });
-    }
-  };
-
-  /**
-   * Upload font file for subtitles
-   * @param {Object} req - Express request object
-   * @param {Object} res - Express response object
-   */
-  uploadFont = async (req, res) => {
-    try {
-      const { videoId } = req.params;
-      
-      if (!req.file) {
-        return res.status(400).json({ message: 'No font file provided' });
-      }
-
-      // Validate font file type
-      if (!req.file.mimetype.includes('font') && !req.file.originalname.toLowerCase().endsWith('.ttf')) {
-        return res.status(400).json({ message: 'File must be a TTF font file' });
-      }
-      
-      // Generate unique filename
-      const fileExtension = path.extname(req.file.originalname);
-      const fontId = uuidv4();
-      const fileName = `${fontId}${fileExtension}`;
-      const filePath = path.join(__dirname, '../../uploads/fonts', fileName);
-      
-      // Create fonts directory if it doesn't exist
-      const fontsDir = path.dirname(filePath);
-      if (!fs.existsSync(fontsDir)) {
-        fs.mkdirSync(fontsDir, { recursive: true });
-      }
-      
-      // Write file to disk
-      fs.writeFileSync(filePath, req.file.buffer);
-      
-      // Update video record in database with font filename
-      await this.videosModel.updateSubtitleStyling(
-        parseInt(videoId),
-        null, // textColor
-        null, // backgroundColor  
-        null, // fontSize
-        fileName // fontFile
-      );
-      
-      return res.status(201).json({
-        message: 'Font uploaded successfully',
-        font: {
-          fileName,
-          originalName: req.file.originalname,
-          mimeType: req.file.mimetype,
-          size: req.file.size,
-          path: `/uploads/fonts/${fileName}`
-        }
-      });
-    } catch (error) {
-      console.error('Error uploading font:', error);
-      return res.status(500).json({ message: 'Failed to upload font', error: error.message });
-    }
-  };
+  // Styling update and font upload endpoints removed: styling now uses default front-end CSS
 
   /**
    * Set video as selected
@@ -497,6 +398,119 @@ class VideosController{
     }
   };
 
+// Styling update and font upload endpoints removed: styling now uses default front-end CSS
+
+/**
+* Set video as selected
+* @param {Object} req - Express request object
+* @param {Object} res - Express response object
+*/
+  setSelectedVideo = async (req, res) => {
+    try {
+      const { videoId } = req.params;
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
+      
+      const updatedVideo = await this.videosModel.setSelectedVideo(parseInt(videoId), parseInt(userId));
+      
+      return res.status(200).json({
+        message: 'Video set as selected successfully',
+        video: updatedVideo
+      });
+    } catch (error) {
+      console.error('Error setting selected video:', error);
+      return res.status(500).json({ message: 'Failed to set selected video', error: error.message });
+    }
+  };
+
+  /**
+   * Search videos
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  searchVideos = async (req, res) => {
+    try {
+      const { query, userId } = req.query;
+      
+      if (!query) {
+        return res.status(400).json({ message: 'Search query is required' });
+      }
+      
+      const videos = await this.videosModel.searchVideos(query, userId ? parseInt(userId) : null);
+      
+      return res.status(200).json({ videos });
+    } catch (error) {
+      console.error('Error searching videos:', error);
+      return res.status(500).json({ message: 'Failed to search videos', error: error.message });
+    }
+  };
+
+  /**
+   * Get user's default subtitle styles
+   * @param {Object} req - Express request object
+   * @param {Object} res - Express response object
+   */
+  getDefaultStyles = async (req, res) => {
+    try {
+      const { userId } = req.query;
+      
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'UserId is required'
+        });
+      }
+
+      console.log('=== DEBUG: Getting default styles for userId:', userId, '===');
+      const styles = await this.videosModel.getUserDefaultStyles(userId);
+      console.log('=== DEBUG: Styles returned from model:', styles);
+
+      res.json({
+        success: true,
+        styles
+      });
+    } catch (error) {
+      console.error('Error getting default styles:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error getting default styles',
+        error: error.message
+      });
+    }
+  }
+
+  // Temporary debug endpoint to check database contents
+  debugDatabase = async (req, res) => {
+    try {
+      const { Colores, Fuentes } = require('../../db/schema');
+      
+      // Get all colors
+      const allColors = await Colores.findAll();
+      console.log('=== ALL COLORS IN DATABASE ===');
+      console.log(JSON.stringify(allColors, null, 2));
+      
+      // Get all fonts
+      const allFonts = await Fuentes.findAll();
+      console.log('=== ALL FONTS IN DATABASE ===');
+      console.log(JSON.stringify(allFonts, null, 2));
+
+      res.json({
+        success: true,
+        colors: allColors,
+        fonts: allFonts
+      });
+    } catch (error) {
+      console.error('Error debugging database:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message
+      });
+    }
+  }
+
   /**
    * Get video duration using ffprobe
    * @param {string} filePath - Path to video file
@@ -534,7 +548,7 @@ class VideosController{
         }
       });
     });
-  };
+  }
 }
 
 module.exports = VideosController;

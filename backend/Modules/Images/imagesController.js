@@ -179,14 +179,18 @@ class ImagesController {
   };
 
   /**
-   * Get all images for a user
+   * Get all images for a user with optional selection filter
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
   getUserImages = async (req, res) => {
     try {
-      const userId = req.params.userId || req.user?.id || 1;
-      const images = await ImagesModel.getImagesByUser(userId);
+      const { userId, selected } = req.query;
+      const userIdToUse = userId || req.user?.id || 1;
+      const images = await ImagesModel.getImagesByUser(
+        userIdToUse, 
+        selected ? parseInt(selected) : null
+      );
       
       const formattedImages = images.map(img => ({
         id: img.id,
@@ -315,30 +319,33 @@ class ImagesController {
   };
 
   /**
-   * Toggle image selection for user
+   * Set image selection status (supports multi-selection)
    * @param {Object} req - Express request object
    * @param {Object} res - Express response object
    */
-  toggleImageSelection = async (req, res) => {
+  setImageSelection = async (req, res) => {
     try {
       const { imageId } = req.params;
-      const userId = req.body.userId || req.user?.id || 1;
+      const { userId, selected } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({ message: 'User ID is required' });
+      }
       
       const image = await ImagesModel.getImageById(imageId);
       if (!image) {
         return res.status(404).json({ message: 'Image not found' });
       }
       
-      // If image is already selected, deselect it; otherwise, select it
-      const newSelectionStatus = image.seleccionada === 1 ? 0 : 1;
-      
-      if (newSelectionStatus === 1) {
-        // First deselect all other images for this user
-        await ImagesModel.deselectAllUserImages(userId);
+      // Verify image belongs to user
+      if (image.id_usuario !== parseInt(userId)) {
+        return res.status(403).json({ message: 'Access denied. Image does not belong to user.' });
       }
       
+      const selectionValue = selected !== undefined ? selected : 1;
+      
       // Update the image selection status
-      const updatedImage = await ImagesModel.updateImage(imageId, { seleccionada: newSelectionStatus });
+      const updatedImage = await ImagesModel.updateImage(imageId, { seleccionada: selectionValue });
       
       const formattedImage = {
         id: updatedImage.id,
@@ -356,12 +363,12 @@ class ImagesController {
       };
       
       return res.status(200).json({ 
-        message: `Image ${newSelectionStatus === 1 ? 'selected' : 'deselected'} successfully`,
+        message: 'Image selection updated successfully',
         image: formattedImage 
       });
     } catch (error) {
-      console.error('Error toggling image selection:', error);
-      return res.status(500).json({ message: 'Failed to toggle image selection', error: error.message });
+      console.error('Error setting image selection:', error);
+      return res.status(500).json({ message: 'Failed to set image selection', error: error.message });
     }
   };
 

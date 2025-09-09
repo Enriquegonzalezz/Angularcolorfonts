@@ -1,4 +1,4 @@
-const { Videos } = require('../../db/schema');
+const { Videos, Colores, Fuentes } = require('../../db/schema');
 const { Op } = require('sequelize');
 
 class VideosModel {
@@ -21,8 +21,6 @@ class VideosModel {
         nombre_subtitulo_2: videoData.nombre_subtitulo_2 || null,
         nombre_audio_1: videoData.nombre_audio_1 || null,
         nombre_audio_2: videoData.nombre_audio_2 || null,
-        color_letra_subtitulo: videoData.color_letra_subtitulo || '#ffffff',
-        fondo_subtitulo: videoData.fondo_subtitulo || '#000000',
         seleccionada: videoData.seleccionada || 0
       });
       return video;
@@ -32,19 +30,26 @@ class VideosModel {
   }
 
   /**
-   * Get all videos for a specific user
+   * Get videos by user ID with optional selection filter
    * @param {number} userId - User ID
+   * @param {number} selected - Selection filter (0 or 1, null for all)
    * @returns {Promise<Array>} Array of video records
    */
-  async getVideosByUser(userId) {
+  async getVideosByUser(userId, selected = null) {
     try {
+      const whereClause = { id_usuario: userId };
+      
+      if (selected !== null) {
+        whereClause.seleccionada = selected;
+      }
+      
       const videos = await Videos.findAll({
-        where: { id_usuario: userId },
+        where: whereClause,
         order: [['id', 'DESC']]
       });
       return videos;
     } catch (error) {
-      throw new Error(`Error fetching videos: ${error.message}`);
+      throw new Error(`Error getting videos by user: ${error.message}`);
     }
   }
 
@@ -203,32 +208,36 @@ class VideosModel {
   }
 
   /**
-   * Set video as selected
+   * Set video selection status (allows multiple selections)
    * @param {number} videoId - Video ID
    * @param {number} userId - User ID
+   * @param {number} selected - Selection status (0 or 1)
    * @returns {Promise<Object>} Updated video record
    */
-  async setSelectedVideo(videoId, userId) {
+  async setSelectedVideo(videoId, userId, selected = 1) {
     try {
-      // First, unselect all videos for this user
-      await Videos.update(
-        { seleccionada: 0 },
-        { where: { id_usuario: userId } }
+      const [affectedRows] = await Videos.update(
+        { seleccionada: selected },
+        { 
+          where: { 
+            id: videoId,
+            id_usuario: userId 
+          } 
+        }
       );
 
-      // Then select the specified video
-      const video = await Videos.findOne({
-        where: { id: videoId, id_usuario: userId }
-      });
-
-      if (!video) {
+      if (affectedRows === 0) {
         throw new Error('Video not found or does not belong to user');
       }
 
-      await video.update({ seleccionada: 1 });
-      return video;
+      // Return the updated video
+      const updatedVideo = await Videos.findOne({
+        where: { id: videoId, id_usuario: userId }
+      });
+
+      return updatedVideo;
     } catch (error) {
-      throw new Error(`Error setting selected video: ${error.message}`);
+      throw new Error(`Error setting video selection: ${error.message}`);
     }
   }
 
@@ -277,6 +286,84 @@ class VideosModel {
       return videos;
     } catch (error) {
       throw new Error(`Error searching videos: ${error.message}`);
+    }
+  }
+
+  /**
+   * Get user's default colors and fonts from database
+   * @param {number} userId - User ID
+   * @returns {Promise<Object>} Default styles object
+   */
+  async getUserDefaultStyles(userId) {
+    try {
+      // Get default colors - try with and without predeterminado filter
+      let colores = await Colores.findOne({
+        where: { id_usuario: userId, predeterminado: 1 }
+      });
+
+      // If no default colors found, try to get any colors for this user
+      if (!colores) {
+        console.log('No default colors found, trying to get any colors for user...');
+        colores = await Colores.findOne({
+          where: { id_usuario: userId }
+        });
+      }
+
+      // If still no colors, try to get the first available colors
+      if (!colores) {
+        console.log('No colors found for user, trying to get first available colors...');
+        colores = await Colores.findOne();
+      }
+
+      // Get default fonts
+      let fuentes = await Fuentes.findOne({
+        where: { id_usuario: userId, predeterminado: 1 }
+      });
+
+      // If no default fonts found, try any fonts for this user
+      if (!fuentes) {
+        console.log('No default fonts found, trying to get any fonts for user...');
+        fuentes = await Fuentes.findOne({
+          where: { id_usuario: userId }
+        });
+      }
+
+      // Debug logging
+      console.log('=== DEBUG: Database Query Results ===');
+      console.log('UserId:', userId);
+      console.log('Colores found:', colores ? {
+        id: colores.id,
+        color_1: colores.color_1,
+        color_2: colores.color_2,
+        color_3: colores.color_3,
+        color_4: colores.color_4,
+        color_5: colores.color_5,
+        predeterminado: colores.predeterminado
+      } : 'NO COLORS FOUND');
+      console.log('Fuentes found:', fuentes ? {
+        id: fuentes.id,
+        fuente_1: fuentes.fuente_1,
+        tamano_1: fuentes.tamano_1,
+        predeterminado: fuentes.predeterminado
+      } : 'NO FONTS FOUND');
+
+      const result = {
+        color1: colores?.color_1 || '#38999e',
+        color2: colores?.color_2 || '#CC8EC6',
+        color3: colores?.color_3 || '#E6E6FA',
+        color4: colores?.color_4 || '#FFFF99',
+        color5: colores?.color_5 || '#98FB98',
+        textColor: colores?.color_1 || '#ffffff',
+        backgroundColor: colores?.color_2 || 'rgba(0,0,0,0.8)',
+        fontFamily: fuentes?.fuente_1 || 'Arial',
+        fontSize: fuentes?.tamano_1 ? `${fuentes.tamano_1}px` : '18px'
+      };
+
+      console.log('Final result being returned:', result);
+      return result;
+    } catch (error) {
+      console.error('Error in getUserDefaultStyles:', error);
+      throw new Error(`Error fetching user default styles: ${error.message}`);
     }
   }
 }

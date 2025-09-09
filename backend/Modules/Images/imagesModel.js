@@ -17,14 +17,21 @@ class ImagesModel {
   }
 
   /**
-   * Obtener todas las imágenes de un usuario
+   * Obtener todas las imágenes de un usuario con filtro de selección opcional
    * @param {number} userId - ID del usuario
+   * @param {number} selected - Filtro de selección (0 o 1, null para todas)
    * @returns {Promise<Array>} Lista de imágenes
    */
-  static async getImagesByUser(userId) {
+  static async getImagesByUser(userId, selected = null) {
     try {
+      const whereClause = { id_usuario: userId };
+      
+      if (selected !== null) {
+        whereClause.seleccionada = selected;
+      }
+      
       const images = await Imagenes.findAll({
-        where: { id_usuario: userId },
+        where: whereClause,
         order: [['fecha_creacion', 'DESC']]
       });
       return images;
