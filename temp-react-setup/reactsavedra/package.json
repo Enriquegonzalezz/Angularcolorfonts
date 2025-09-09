@@ -10,7 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "cropperjs": "^2.0.1",
+    "cropperjs": "^1.6.2",
     "jspdf": "^3.0.2",
     "jspdf-autotable": "^5.0.2",
     "react": "^19.1.1",

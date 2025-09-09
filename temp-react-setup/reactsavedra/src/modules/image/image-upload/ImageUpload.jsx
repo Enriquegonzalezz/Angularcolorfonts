@@ -1,580 +1,454 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useRef, useEffect } from 'react';
+import Cropper from 'cropperjs';
 import axios from 'axios';
-import { useAuth } from '../../../services/AuthContext';
-import { Cropper } from 'react-cropper';
-import TangramLoader from '../../../components/tangram-loader/TangramLoader';
+import 'cropperjs/dist/cropper.min.css';
 import './ImageUpload.css';
 
 const ImageUpload = () => {
-  const navigate = useNavigate();
-  const { isAuthenticated, getUserId } = useAuth();
-  const imageRef = useRef(null);
-  const cdrRef = useRef(null);
+  // Referencias a elementos DOM
+  const imageInputRef = useRef(null);
+  const imageToCropRef = useRef(null);
+  const cropperContainerRef = useRef(null);
+  const resultSectionRef = useRef(null);
+  const resultContainerRef = useRef(null);
   
-  // Estados para el archivo de imagen
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [originalImagePreview, setOriginalImagePreview] = useState(null);
+  // Estados para guardar información
+  const [originalFile, setOriginalFile] = useState(null);
   const [cropper, setCropper] = useState(null);
-  const [isCropping, setIsCropping] = useState(false);
-  
-  // Metadatos de la imagen
-  const [imageName, setImageName] = useState('');
-  const [imageSize, setImageSize] = useState(0);
-  const [imageWidth, setImageWidth] = useState(0);
-  const [imageHeight, setImageHeight] = useState(0);
-  
-  // Datos originales de la imagen (para comparación)
-  const [originalImageSize, setOriginalImageSize] = useState(0);
-  const [originalImageWidth, setOriginalImageWidth] = useState(0);
-  const [originalImageHeight, setOriginalImageHeight] = useState(0);
-  
-  // Datos del recorte
-  const [cropData, setCropData] = useState(null);
-  const [isCropped, setIsCropped] = useState(false);
-  
-  // Estado de la subida
+  const [originalDetails, setOriginalDetails] = useState({
+    name: '',
+    dimensions: '',
+    size: '',
+    type: ''
+  });
+  const [resultDetails, setResultDetails] = useState({
+    name: '',
+    dimensions: '',
+    size: '',
+    type: ''
+  });
+  const [showOriginalDetails, setShowOriginalDetails] = useState(false);
+  const [showCropperContainer, setShowCropperContainer] = useState(false);
+  const [showCropButton, setShowCropButton] = useState(false);
+  const [showResultSection, setShowResultSection] = useState(false);
+  const [resultImageSrc, setResultImageSrc] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
   
-  // Lista de imágenes del usuario
-  const [userImages, setUserImages] = useState([]);
-  const [isLoadingImages, setIsLoadingImages] = useState(false);
-  
-  // ID del usuario del servicio de autenticación
-  const [userId, setUserId] = useState(null);
-  
-  // Verificar autenticación
-  useEffect(() => {
-    if (!isAuthenticated()) {
-      navigate('/login');
-      return;
-    }
-    
-    const id = getUserId();
-    if (!id) {
-      navigate('/login');
-      return;
-    }
-    
-    setUserId(id);
-    loadUserImages(id);
-  }, [isAuthenticated, getUserId, navigate]);
-  
-  // Cargar imágenes del usuario
-  const loadUserImages = (id) => {
-    if (!id) {
-      console.error('No user ID available');
-      return;
-    }
-    
-    setIsLoadingImages(true);
-    axios.get(`http://localhost:3000/images/user/${id}`)
-      .then(response => {
-        setUserImages(response.data.images);
-        setIsLoadingImages(false);
-      })
-      .catch(error => {
-        console.error('Error loading images:', error);
-        setIsLoadingImages(false);
-      });
-  };
-  
-  // Manejar selección de archivo
-  const onFileSelected = (event) => {
-    const input = event.target;
-    
-    if (input.files && input.files.length > 0) {
-      const file = input.files[0];
-      setImageFile(file);
-      setImageName(file.name);
-      setImageSize(file.size);
-      setIsCropped(false);
-      setCropData(null);
-      
-      // Crear previsualización
-      const reader = new FileReader();
-      reader.onload = () => {
-        setImagePreview(reader.result);
-        
-        // Obtener dimensiones
-        const img = new Image();
-        img.onload = () => {
-          setImageWidth(img.width);
-          setImageHeight(img.height);
-          // Guardar datos originales para comparación
-          setOriginalImageSize(file.size);
-          setOriginalImageWidth(img.width);
-          setOriginalImageHeight(img.height);
-          // Guardar la vista previa original
-          setOriginalImagePreview(reader.result);
-          console.log('Dimensiones de imagen cargada:', img.width, 'x', img.height);
-        };
-        img.onerror = () => {
-          console.error('Error cargando imagen para obtener dimensiones');
-          // Valores por defecto si no se pueden obtener las dimensiones
-          setImageWidth(800);
-          setImageHeight(600);
-          setOriginalImageWidth(800);
-          setOriginalImageHeight(600);
-        };
-        img.src = reader.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-  
-  // Iniciar recorte
-  const startCropping = () => {
-    setIsCropping(true);
-    setCropData(null); // Reset crop data
-  };
-  
-  // Aplicar recorte
-  const applyCrop = () => {
-    if (!cropper) {
-      console.error('Cropper not initialized');
-      return;
-    }
-    
-    try {
-      // Obtener datos del recorte
-      const cropData = cropper.getData();
-      setCropData(cropData);
-      
-      // Obtener imagen recortada como base64
-      const croppedCanvas = cropper.getCroppedCanvas();
-      const croppedImage = croppedCanvas.toDataURL('image/jpeg');
-      
-      // Crear un nuevo archivo a partir de la imagen recortada
-      croppedCanvas.toBlob((blob) => {
-        if (!blob) {
-          console.error('Canvas to Blob conversion failed');
-          return;
-        }
-        
-        // Crear un nuevo archivo con el mismo nombre
-        const croppedFile = new File([blob], imageFile.name, {
-          type: 'image/jpeg',
-          lastModified: new Date().getTime()
-        });
-        
-        // Actualizar el estado con la nueva imagen recortada
-        setImageFile(croppedFile);
-        setImagePreview(croppedImage);
-        setImageSize(croppedFile.size);
-        
-        // Obtener dimensiones de la imagen recortada
-        const img = new Image();
-        img.onload = () => {
-          setImageWidth(img.width);
-          setImageHeight(img.height);
-          setIsCropped(true);
-          setIsCropping(false);
-        };
-        img.src = croppedImage;
-      }, 'image/jpeg');
-    } catch (error) {
-      console.error('Error applying crop:', error);
-      setIsCropping(false);
-    }
-  };
-  
-  // Cancelar recorte
-  const cancelCrop = () => {
-    setIsCropping(false);
-    if (cropper) {
-      setCropper(null);
-    }
-  };
-  
-  // Formatear tamaño de archivo
-  const formatFileSize = (bytes) => {
+  // Función para formatear bytes a KB, MB, etc.
+  const formatBytes = (bytes, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
   
-  // Subir imagen
-  const uploadImage = () => {
-    if (!imageFile) {
-      setUploadError('No image selected');
+  // Manejar cambio de archivo
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    
+    if (!file) {
       return;
     }
     
-    // Validar que tenemos dimensiones válidas
-    if (imageWidth <= 0 || imageHeight <= 0) {
-      console.warn('Dimensiones inválidas, usando valores por defecto');
-      setImageWidth(prev => prev || 800);
-      setImageHeight(prev => prev || 600);
+    setOriginalFile(file);
+    
+    // Mostrar detalles del archivo original
+    setOriginalDetails({
+      name: file.name,
+      size: formatBytes(file.size),
+      type: file.type,
+      dimensions: '' // Se actualizará cuando la imagen se cargue
+    });
+    setShowOriginalDetails(true);
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (imageToCropRef.current) {
+        imageToCropRef.current.src = event.target.result;
+        
+        // Esperar a que la imagen se cargue para obtener sus dimensiones reales
+        imageToCropRef.current.onload = () => {
+          setOriginalDetails(prev => ({
+            ...prev,
+            dimensions: `${imageToCropRef.current.naturalWidth} x ${imageToCropRef.current.naturalHeight} px`
+          }));
+          
+          setShowCropperContainer(true);
+          setShowCropButton(true);
+          setShowResultSection(false); // Ocultar resultados anteriores
+          setUploadSuccess(false);
+          setUploadError('');
+          setUploadedImageUrl('');
+          
+          if (cropper) {
+            cropper.destroy();
+          }
+          
+          // Inicializar Cropper.js
+          const newCropper = new Cropper(imageToCropRef.current, {
+            aspectRatio: 1, // Recorte cuadrado
+            viewMode: 1,
+            dragMode: 'move',
+            autoCropArea: 0.9,
+            responsive: true,
+            cropBoxResizable: true,
+            guides: true,
+          });
+          
+          setCropper(newCropper);
+        };
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+  
+  // Manejar recorte de imagen
+  const handleCrop = () => {
+    if (!cropper) {
+      return;
+    }
+    
+    const cropOptions = {
+      width: 800,
+      height: 800,
+      imageSmoothingQuality: 'high',
+    };
+    
+    // Obtener el canvas con la imagen recortada
+    const canvas = cropper.getCroppedCanvas(cropOptions);
+    
+    // Convertir canvas a Data URL (formato base64) para mostrar y calcular peso
+    const mimeType = 'image/jpeg';
+    const dataURL = canvas.toDataURL(mimeType, 0.9); // 0.9 es la calidad para JPEG
+    
+    // Calcular el peso de la imagen recortada
+    const base64Data = dataURL.split(',')[1];
+    const byteCharacters = atob(base64Data);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: mimeType });
+    
+    // Actualizar detalles de la imagen recortada
+    setResultDetails({
+      name: `recorte-${originalFile.name}`,
+      dimensions: `${cropOptions.width} x ${cropOptions.height} px`,
+      size: formatBytes(blob.size),
+      type: mimeType
+    });
+    
+    // Mostrar la imagen recortada
+    setResultImageSrc(dataURL);
+    setShowResultSection(true);
+    
+    // Scroll a la sección de resultados
+    if (resultSectionRef.current) {
+      resultSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  // Guardar imagen en el servidor
+  const handleSaveImage = async () => {
+    if (!resultImageSrc) {
+      return;
     }
     
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadSuccess(false);
     setUploadError('');
+    setUploadSuccess(false);
     
-    // Create form data with additional metadata
-    const formData = new FormData();
-    formData.append('image', imageFile);
-    formData.append('userId', userId.toString());
-    formData.append('isCropped', isCropped.toString());
-    
-    // Agregar datos del recorte si la imagen fue recortada
-    if (isCropped && cropData) {
-      formData.append('cropData', JSON.stringify(cropData));
-      console.log('📤 Enviando datos de recorte al backend:', cropData);
-    } else if (isCropped) {
-      console.warn('⚠️ Imagen marcada como recortada pero no hay datos de recorte');
-    }
-    
-    // Agregar metadatos adicionales
-    formData.append('originalWidth', imageWidth.toString());
-    formData.append('originalHeight', imageHeight.toString());
-    formData.append('originalSize', imageSize.toString());
-    
-    console.log('Subiendo imagen:', {
-      fileName: imageFile.name,
-      size: imageFile.size,
-      width: imageWidth,
-      height: imageHeight,
-      isCropped: isCropped,
-      cropData: cropData
-    });
-    
-    // Upload to backend
-    axios.post('http://localhost:3000/images/upload', formData, {
-      onUploadProgress: (progressEvent) => {
-        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-        setUploadProgress(percentCompleted);
+    try {
+      // Convertir dataURL a Blob para enviar al servidor
+      const base64Data = resultImageSrc.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
       }
-    }).then(response => {
-      setIsUploading(false);
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+      
+      // Crear FormData para enviar al servidor
+      const formData = new FormData();
+      formData.append('image', blob, `recorte-${originalFile.name}`);
+      
+      // Enviar al servidor
+      const response = await axios.post('http://localhost:3000/api/images/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+          setUploadProgress(percentCompleted);
+        }
+      });
+      
+      // Actualizar estado con la respuesta del servidor
       setUploadSuccess(true);
-      if (response.data && response.data.image) {
-        setUploadedImageUrl(response.data.image.imageUrl);
-        console.log('Imagen subida exitosamente:', response.data.image);
-        // Reload user images after successful upload
-        loadUserImages(userId);
-      }
-    }).catch(error => {
+      setUploadedImageUrl(response.data.url);
+      console.log('Imagen guardada exitosamente:', response.data);
+    } catch (error) {
+      console.error('Error al guardar la imagen:', error);
+      setUploadError(`Error al guardar la imagen: ${error.message}`);
+    } finally {
       setIsUploading(false);
-      setUploadError(`Error en la subida: ${error.message}`);
-      console.error('Error uploading image:', error);
-    });
+    }
   };
   
-  // Resetear subida
-  const resetUpload = () => {
-    setImageFile(null);
-    setImagePreview(null);
-    setOriginalImagePreview(null);
-    setImageName('');
-    setImageSize(0);
-    setImageWidth(0);
-    setImageHeight(0);
-    setOriginalImageSize(0);
-    setOriginalImageWidth(0);
-    setOriginalImageHeight(0);
-    setCropData(null);
-    setIsCropped(false);
-    setUploadSuccess(false);
-    setUploadError('');
-  };
+  // Limpiar al desmontar
+  useEffect(() => {
+    return () => {
+      if (cropper) {
+        cropper.destroy();
+      }
+    };
+  }, [cropper]);
   
-  // Alternar selección de imagen
-  const toggleImageSelection = (imageId) => {
-    setUserImages(prevImages => 
-      prevImages.map(img => 
-        img.id === imageId 
-          ? { ...img, selected: !img.selected } 
-          : img
-      )
-    );
-  };
-  
-  // Eliminar imagen
-  const deleteImage = (imageId) => {
-    // Aquí iría la lógica para eliminar una imagen
-    // Esta función requeriría una llamada a la API del backend
-  };
-
   return (
-    <div className="image-upload-container">
-      <TangramLoader isLoading={isUploading || isLoadingImages} onSkip={() => {
-        setIsUploading(false);
-        setIsLoadingImages(false);
-      }} />
-      {!imagePreview && (
-        <div className="upload-section">
-          <h2>Subir Imagen</h2>
-          <div className="upload-box">
-            <input 
-              type="file" 
-              onChange={onFileSelected} 
-              accept="image/*" 
-              id="fileInput" 
-              className="file-input" 
-            />
-            <label htmlFor="fileInput" className="file-label">
-              <span>Elegir una imagen</span>
-            </label>
-          </div>
-        </div>
-      )}
-
-      {imagePreview && !isCropping && (
-        <div className="preview-section">
-          <h2>Vista Previa de la Imagen</h2>
-          
-          {isCropped && (
-            <div className="crop-badge">
-              <span className="badge badge-success">Imagen Recortada</span>
-            </div>
-          )}
-          
-          {isCropped ? (
-            <div className="image-comparison">
-              <div className="comparison-container">
-                <div className="original-image-section">
-                  <h3>📷 Imagen Original</h3>
-                  <div className="image-preview">
-                    <img src={originalImagePreview} alt="Original" className="original-preview" />
-                  </div>
-                  <div className="image-metadata" style={"color: black;"}>
-                    <h4>Detalles Originales</h4>
-                    <ul>
-                      <li><strong>Nombre:</strong> {imageName}</li>
-                      <li><strong>Tamaño:</strong> {formatFileSize(originalImageSize)}</li>
-                      <li><strong>Dimensiones:</strong> {originalImageWidth} x {originalImageHeight} px</li>
-                      <li><strong>Estado:</strong> <span className="badge badge-secondary">Original</span></li>
-                    </ul>
-                  </div>
-                </div>
-                
-                <div className="vs-separator">
-                  <div className="vs-circle">VS</div>
-                </div>
-                
-                <div className="cropped-image-section">
-                  <h3>✂️ Imagen Recortada</h3>
-                  <div className="image-preview">
-                    <img src={imagePreview} alt="Cropped" className="cropped-preview" />
-                  </div>
-                  <div className="image-metadata">
-                    <h4>Detalles Recortados</h4>
-                    <ul>
-                      <li><strong>Nombre:</strong> {imageName}</li>
-                      <li><strong>Tamaño:</strong> {formatFileSize(imageSize)}</li>
-                      <li><strong>Dimensiones:</strong> {imageWidth} x {imageHeight} px</li>
-                      <li><strong>Estado:</strong> <span className="badge badge-success">Recortada</span></li>
-                      {cropData && (
-                        <li>
-                          <strong>Datos de Recorte:</strong> 
-                          <div className="crop-details">
-                            <small>Posición: X: {cropData.x.toFixed(2)}, Y: {cropData.y.toFixed(2)}</small><br />
-                            <small>Área: {cropData.width.toFixed(2)} x {cropData.height.toFixed(2)} px</small>
-                            {cropData.rotate !== 0 && (
-                              <><br /><small>Rotación: {cropData.rotate}°</small></>
-                            )}
-                          </div>
-                        </li>
-                      )}
-                      
-                      <li>
-                        <strong>Reducción de Tamaño:</strong> 
-                        <span className="size-reduction-badge">
-                          {((originalImageSize - imageSize) / originalImageSize * 100).toFixed(1)}% más pequeño
-                        </span>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="image-preview">
-                <img src={imagePreview} alt="Preview" />
-              </div>
-              
-              <div className="image-metadata">
-                <h3>Detalles de la Imagen</h3>
-                <ul>
-                  <li><strong>Nombre:</strong> {imageName}</li>
-                  <li><strong>Tamaño:</strong> {formatFileSize(imageSize)}</li>
-                  <li><strong>Dimensiones:</strong> {imageWidth} x {imageHeight} px</li>
-                  <li><strong>Estado:</strong> <span className="badge badge-secondary">Original</span></li>
-                </ul>
-              </div>
-            </>
-          )}
-          
-          <div className="action-buttons">
-            {!isCropped && (
-              <button onClick={startCropping} className="btn btn-primary">Recortar Imagen</button>
-            )}
-            <button onClick={uploadImage} className="btn btn-success">Subir Imagen</button>
-            <button onClick={resetUpload} className="btn btn-secondary">Nueva Imagen</button>
-          </div>
-        </div>
-      )}
-
-      {isCropping && (
-        <div className="cropping-section">
-          <h2>Recortar Imagen</h2>
-          <div className="cropper-container">
-            <Cropper
-              ref={imageRef}
-              src={imagePreview}
-              style={{ height: 400, width: '100%' }}
-              aspectRatio={16 / 9}
-              guides={true}
-              crop={(e) => console.log(e.detail)}
-              onInitialized={(instance) => setCropper(instance)}
-            />
-          </div>
-          
-          <div className="cropper-instructions">
-            <h4>Instrucciones de Recorte:</h4>
-            <ul className="crop-instructions-list">
-              <li><i className="fas fa-arrows-alt"></i> <strong>Mover imagen:</strong> Arrastra dentro del área de recorte</li>
-              <li><i className="fas fa-expand-arrows-alt"></i> <strong>Redimensionar:</strong> Arrastra los bordes o esquinas</li>
-              <li><i className="fas fa-crop-alt"></i> <strong>Ajustar área:</strong> Mueve el marco de recorte</li>
-            </ul>
-          </div>
-          
-          <div className="crop-preview-info">
-            {cropData && (
-              <div className="crop-dimensions">
-                <span className="dimension-badge">{Math.round(cropData.width)} x {Math.round(cropData.height)} px</span>
-              </div>
-            )}
-          </div>
-          
-          <div className="action-buttons">
-            <button onClick={applyCrop} className="btn btn-primary"><i className="fas fa-check"></i> Aplicar Recorte</button>
-            <button onClick={cancelCrop} className="btn btn-danger"><i className="fas fa-times"></i> Cancelar</button>
-          </div>
-        </div>
-      )}
-
-      {uploadSuccess && (
-        <div className="upload-success">
-          <h3>¡Imagen Subida Exitosamente!</h3>
-          <div className="success-details">
-            <p><strong>URL:</strong> {uploadedImageUrl}</p>
-            <p><strong>Estado:</strong> Guardada en base de datos</p>
-          </div>
-          <button onClick={resetUpload} className="btn btn-primary">Subir Otra Imagen</button>
-        </div>
-      )}
-
-      {uploadError && (
-        <div className="upload-error">
-          <h3>Error en la Subida</h3>
-          <p>{uploadError}</p>
-          <button onClick={() => setUploadError('')} className="btn btn-danger">Cerrar</button>
-        </div>
-      )}
-
-      {isUploading && (
-        <div className="upload-progress">
-          <h3>Subiendo Imagen...</h3>
-          <div className="progress-bar">
-            <div className="progress-fill" style={{ width: `${uploadProgress}%` }}></div>
-          </div>
-          <p>{uploadProgress}% completado</p>
-        </div>
-      )}
-
-      {/* Lista de Imágenes del Usuario */}
-      <div className="user-images-section">
-        <h2>Mis Imágenes</h2>
+    <div className="container" style={{
+      backgroundColor: '#ffffff',
+      padding: '30px',
+      borderRadius: '12px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+      maxWidth: '800px',
+      width: '100%',
+      textAlign: 'center'
+    }}>
+      <h1 style={{ color: '#1a73e8', marginTop: 0 }}>Recortador de Imágenes con Metadatos</h1>
+      
+      {/* SECCIÓN DE ENTRADA */}
+      <div className="input-section" style={{
+        border: '1px dashed #d0d0d0',
+        padding: '20px',
+        borderRadius: '8px',
+        marginTop: '20px'
+      }}>
+        <h2>1. Sube tu imagen</h2>
+        <label htmlFor="imageInput" className="custom-file-upload" style={{
+          border: '1px solid #ccc',
+          display: 'inline-block',
+          padding: '10px 20px',
+          cursor: 'pointer',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '5px',
+          fontWeight: 'bold',
+          transition: 'background-color 0.3s',
+          color: '#000',
+        }}>Seleccionar Imagen</label>
+        <input 
+          type="file" 
+          id="imageInput" 
+          ref={imageInputRef}
+          accept="image/*" 
+          onChange={handleFileChange}
+          style={{ display: 'none' }}
+        />
         
-        {isLoadingImages ? (
-          <div className="loading-images">
-            <p>Cargando imágenes...</p>
+        {showOriginalDetails && (
+          <div className="image-details" style={{
+            textAlign: 'left',
+            backgroundColor: '#f9f9f9',
+            border: '1px solid #eee',
+            padding: '15px',
+            borderRadius: '5px',
+            marginTop: '15px',
+            fontSize: '14px'
+          }}>
+            <p><strong style={{ minWidth: '100px', display: 'inline-block', color: '#000' }}>Nombre:</strong> <span style={{ color: '#000' }}>{originalDetails.name}</span></p>
+            <p><strong style={{ minWidth: '100px', display: 'inline-block', color: '#000' }}>Dimensiones:</strong> <span style={{ color: '#000' }}>{originalDetails.dimensions}</span></p>
+            <p><strong style={{ minWidth: '100px', display: 'inline-block', color: '#000' }}>Peso:</strong> <span style={{ color: '#000' }}>{originalDetails.size}</span></p>
+            <p><strong style={{ minWidth: '100px', display: 'inline-block', color: '#000' }}>Tipo:</strong> <span style={{ color: '#000' }}>{originalDetails.type}</span></p>
           </div>
-        ) : userImages.length === 0 ? (
-          <div className="no-images">
-            <p>No tienes imágenes subidas aún.</p>
+        )}
+        
+        <div 
+          className="cropper-container" 
+          ref={cropperContainerRef}
+          style={{ 
+            display: showCropperContainer ? 'block' : 'none',
+            margin: '20px auto',
+            maxWidth: '100%',
+            height: '450px',
+            backgroundColor: '#e9ecef',
+            color: '#000  '
+          }}
+        >
+          <img 
+            ref={imageToCropRef} 
+            id="imageToCrop" 
+            style={{
+              display: 'block',
+              maxWidth: '100%'
+            }}
+          />
+        </div>
+        
+        {showCropButton && (
+          <button 
+            id="cropButton" 
+            onClick={handleCrop}
+            style={{ 
+              backgroundColor: '#28a745',
+              color: 'white',
+              border: 'none',
+              padding: '12px 25px',
+              fontSize: '16px',
+              fontWeight: 'bold',
+              borderRadius: '5px',
+              cursor: 'pointer',
+              marginTop: '20px',
+              color: '#000',
+              transition: 'background-color 0.3s'
+            }}
+          >
+            Recortar Imagen
+          </button>
+        )}
+      </div>
+      
+      {/* SECCIÓN DE RESULTADO */}
+      <div 
+        className="result-section" 
+        ref={resultSectionRef}
+        style={{ 
+          display: showResultSection ? 'block' : 'none',
+          border: '1px dashed #d0d0d0',
+          padding: '20px',
+          borderRadius: '8px',
+          color: '#000',
+          marginTop: '20px'
+        }}
+      >
+        <h2>2. Resultado</h2>
+        <div 
+          className="result-container"
+          ref={resultContainerRef}
+          style={{ textAlign: 'center' }}
+        >
+          {resultImageSrc && (
+            <img 
+              src={resultImageSrc} 
+              alt="Imagen recortada" 
+              style={{
+                maxWidth: '100%',
+                marginTop: '15px',
+                border: '2px solid #ddd',
+                borderRadius: '8px',
+                color: '#000',
+                padding: '5px'
+              }}
+            />
+          )}
+        </div>
+        
+        <div className="image-details" style={{
+          textAlign: 'left',
+          backgroundColor: '#f9f9f9',
+          border: '1px solid #eee',
+          padding: '15px',
+          borderRadius: '5px',
+          marginTop: '15px',  
+          fontSize: '14px',
+          color: '#000',
+        }}>
+          <p><strong style={{ minWidth: '100px', display: 'inline-block' }}>Nombre:</strong> <span>{resultDetails.name}</span></p>
+          <p><strong style={{ minWidth: '100px', display: 'inline-block' }}>Dimensiones:</strong> <span>{resultDetails.dimensions}</span></p>
+          <p><strong style={{ minWidth: '100px', display: 'inline-block' }}>Peso:</strong> <span>{resultDetails.size}</span></p>
+          <p><strong style={{ minWidth: '100px', display: 'inline-block' }}>Tipo:</strong> <span>{resultDetails.type}</span></p>
+        </div>
+        
+        {/* Botón para guardar en el servidor */}
+        <button 
+          onClick={handleSaveImage}
+          disabled={isUploading}
+          style={{ 
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            padding: '12px 25px',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            borderRadius: '5px',
+            cursor: 'pointer',
+            marginTop: '20px',
+            transition: 'background-color 0.3s'
+          }}
+        >
+          {isUploading ? 'Guardando...' : 'Guardar en Servidor'}
+        </button>
+        
+        {/* Barra de progreso */}
+        {isUploading && (
+          <div style={{ 
+            marginTop: '15px',
+            backgroundColor: '#e9ecef',
+            borderRadius: '5px',
+            height: '20px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${uploadProgress}%`,
+              backgroundColor: '#007bff',
+              height: '100%',
+              textAlign: 'center',
+              lineHeight: '20px',
+              color: 'white',
+              transition: 'width 0.3s ease'
+            }}>
+              {uploadProgress}%
+            </div>
           </div>
-        ) : (
-          <div className="images-grid">
-            {userImages.map(image => (
-              <div key={image.id} className={`image-card ${image.selected ? 'selected' : ''}`}>
-                <div className="image-card-header">
-                  {image.selected && (
-                    <span className="selection-badge">Seleccionada</span>
-                  )}
-                  {image.isCropped ? (
-                    <span className="crop-badge-small">✂️ Recortada</span>
-                  ) : (
-                    <span className="original-badge">📷 Original</span>
-                  )}
-                </div>
-                
-                <div className="image-card-body">
-                  <img 
-                    src={`http://localhost:3000/public${image.imageUrl}`} 
-                    alt={image.originalName} 
-                    className="image-thumbnail" 
-                  />
-                  
-                  <div className="image-info">
-                    <h4>{image.originalName}</h4>
-                    <p><strong>Tamaño:</strong> {formatFileSize(image.size)}</p>
-                    <p><strong>Dimensiones:</strong> {image.width} x {image.height} px</p>
-                    <p><strong>Fecha:</strong> {new Date(image.createdAt).toLocaleString()}</p>
-                    
-                    {image.characteristics && (
-                      <div className="characteristics-info">
-                        <p><strong>Características:</strong></p>
-                        <ul>
-                          {image.isCropped ? (
-                            <>
-                              <li><strong>Original:</strong> {image.characteristics.originalWidth} x {image.characteristics.originalHeight} px</li>
-                              <li><strong>Recortada:</strong> {image.characteristics.finalWidth} x {image.characteristics.finalHeight} px</li>
-                              {image.characteristics.cropData && (
-                                <>
-                                  <li><strong>Área recortada:</strong> {image.characteristics.cropData.width} x {image.characteristics.cropData.height} px</li>
-                                  <li><strong>Posición:</strong> X:{Math.round(image.characteristics.cropData.x)}, Y:{Math.round(image.characteristics.cropData.y)}</li>
-                                </>
-                              )}
-                            </>
-                          ) : (
-                            <li><strong>Dimensiones:</strong> {image.characteristics.finalWidth} x {image.characteristics.finalHeight} px</li>
-                          )}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="image-card-actions">
-                  <button 
-                    onClick={() => toggleImageSelection(image.id)} 
-                    className={`btn ${image.selected ? 'btn-warning' : 'btn-primary'}`}
-                  >
-                    {image.selected ? 'Deseleccionar' : 'Seleccionar'}
-                  </button>
-                  
-                  <button 
-                    onClick={() => deleteImage(image.id)} 
-                    className="btn btn-danger"
-                  >
-                    Eliminar
-                  </button>
-                </div>
-              </div>
-            ))}
+        )}
+        
+        {/* Mensaje de éxito */}
+        {uploadSuccess && (
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#d4edda',
+            color: '#155724',
+            borderRadius: '5px',
+            border: '1px solid #c3e6cb'
+          }}>
+            <p>¡Imagen guardada exitosamente!</p>
+            {uploadedImageUrl && (
+              <a 
+                href={uploadedImageUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{
+                  color: '#007bff',
+                  textDecoration: 'underline'
+                }}
+              >
+                Ver imagen en el servidor
+              </a>
+            )}
+          </div>
+        )}
+        
+        {/* Mensaje de error */}
+        {uploadError && (
+          <div style={{
+            marginTop: '15px',
+            padding: '10px',
+            backgroundColor: '#f8d7da',
+            color: '#721c24',
+            borderRadius: '5px',
+            border: '1px solid #f5c6cb'
+          }}>
+            <p>{uploadError}</p>
           </div>
         )}
       </div>
