@@ -18,16 +18,21 @@ const createVideosRouter = () => {
   // Get all videos (with optional userId filter)
   videosRouter.get('/', videosController.getAllVideos);
   
+  // Get user default styles for subtitles and tangram
+  videosRouter.get('/default-styles', videosController.getDefaultStyles);
+
+  // Debug endpoint to check database contents
+  videosRouter.get('/debug-database', videosController.debugDatabase);
+  
   // Get video by ID
   videosRouter.get('/id/:videoId', videosController.getVideoById);
   
   // Get video by filename
   videosRouter.get('/file/:fileName', videosController.getVideoByFileName);
   
-  // Update subtitle styling
-  videosRouter.put('/:videoId/subtitle-styling', videosController.updateSubtitleStyling);
+  // Subtitle styling persistence removed; default styles handled on frontend
   
-  // Set video as selected
+  // Set video selection status (supports multi-selection)
   videosRouter.put('/:videoId/select', videosController.setSelectedVideo);
   
   // Search videos

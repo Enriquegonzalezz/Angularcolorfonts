@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../services/AuthContext';
+import TangramLoader from '../../../components/tangram-loader/TangramLoader';
 import './MediaCarousel.css';
 
 // Definición de la interfaz MediaItem
@@ -24,18 +25,35 @@ import './MediaCarousel.css';
 
 const MediaCarousel = () => {
   const [mediaItems, setMediaItems] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedItem, setSelectedItem] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [userColors, setUserColors] = useState(null);
+  const [isLoadingStyles, setIsLoadingStyles] = useState(true);
   
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, getUserId } = useAuth();
+  const userId = getUserId();
   
   // API URLs
-  const imagesApiUrl = 'http://localhost:3000/images';
-  const videosApiUrl = 'http://localhost:3000/videos';
+  const imagesApiUrl = `http://localhost:3000/images?userId=${userId}&selected=1`;
+  const videosApiUrl = `http://localhost:3000/videos?userId=${userId}&selected=1`;
   
+  // Cargar estilos del usuario
+  const loadUserStyles = async () => {
+    if (!userId) return;
+    
+    try {
+      const response = await axios.get(`http://localhost:3000/videos/default-styles?userId=${userId}`);
+      setUserColors(response.data);
+      setIsLoadingStyles(false);
+    } catch (error) {
+      console.error('Error loading user styles:', error);
+      setIsLoadingStyles(false);
+    }
+  };
+
   // Verificar autenticación al cargar el componente
   useEffect(() => {
     if (!isAuthenticated()) {
@@ -44,7 +62,8 @@ const MediaCarousel = () => {
     }
     
     loadMediaItems();
-  }, [isAuthenticated, navigate]);
+    loadUserStyles();
+  }, [isAuthenticated, navigate, userId]);
   
   // Cargar elementos multimedia
   const loadMediaItems = () => {
@@ -54,18 +73,20 @@ const MediaCarousel = () => {
     // Cargar imágenes
     axios.get(imagesApiUrl)
       .then(imageResponse => {
-        const images = imageResponse.data.images.map(image => ({
+        const images = imageResponse.data.images.map((image, index) => ({
           ...image,
           type: 'image',
+          uniqueId: `image-${image.id || 'noId'}-${image.nombre_archivo || image.nombre_original || 'noName'}-${Date.now()}-${index}`,
           createdAt: new Date(image.createdAt)
         }));
         
         // Cargar videos
         axios.get(videosApiUrl)
           .then(videoResponse => {
-            const videos = videoResponse.data.videos.map(video => ({
+            const videos = videoResponse.data.videos.map((video, index) => ({
               ...video,
               type: 'video',
+              uniqueId: `video-${video.id || 'noId'}-${video.nombre_archivo || video.nombre_original || 'noName'}-${Date.now()}-${index}`,
               createdAt: new Date(video.createdAt)
             }));
             
@@ -127,6 +148,34 @@ const MediaCarousel = () => {
   const closeDetails = () => {
     setSelectedItem(null);
   };
+
+  // Alternar selección de elemento
+  const toggleSelection = async (item) => {
+    try {
+      const endpoint = item.type === 'image' 
+        ? `http://localhost:3000/images/${item.id}/select`
+        : `http://localhost:3000/videos/${item.id}/select`;
+      
+      const newSelectionState = item.seleccionada === 1 ? 0 : 1;
+      
+      await axios.put(endpoint, { 
+        userId: userId,
+        selected: newSelectionState 
+      });
+      
+      // Actualizar el estado local
+      setMediaItems(prevItems => 
+        prevItems.map(mediaItem => 
+          mediaItem.id === item.id 
+            ? { ...mediaItem, seleccionada: newSelectionState }
+            : mediaItem
+        )
+      );
+    } catch (error) {
+      console.error('Error toggling selection:', error);
+      setError('Failed to update selection');
+    }
+  };
   
   // Formatear tamaño de archivo
   const formatFileSize = (bytes) => {
@@ -151,9 +200,32 @@ const MediaCarousel = () => {
     return new Date(date).toLocaleString();
   };
 
+  // Aplicar estilos del usuario
+  const containerStyle = userColors ? {
+    backgroundColor: userColors.backgroundColor,
+    color: userColors.textColor,
+    fontFamily: userColors.fontFamily
+  } : {};
+
+  const titleStyle = userColors ? {
+    color: userColors.color1,
+    fontFamily: userColors.fontFamily,
+    fontSize: userColors.fontSize
+  } : {};
+
+  const buttonStyle = userColors ? {
+    backgroundColor: userColors.color2,
+    color: userColors.textColor,
+    borderColor: userColors.color3
+  } : {};
+
+  if (isLoadingStyles) {
+    return <TangramLoader userId={userId} isLoading={true} onSkip={() => setIsLoadingStyles(false)} />;
+  }
+
   return (
-    <div className="carousel-container">
-      <h2>Media Gallery</h2>
+    <div className="carousel-container" style={containerStyle}>
+      <h2 style={titleStyle}>Galería de Medios</h2>
       
       {/* Estado de carga */}
       {loading && (
@@ -167,66 +239,82 @@ const MediaCarousel = () => {
       {error && (
         <div className="error-container">
           <p className="error-message">{error}</p>
-          <button className="btn btn-primary" onClick={loadMediaItems}>Try Again</button>
+          <button className="btn btn-primary" style={buttonStyle} onClick={loadMediaItems}>Intentar de nuevo</button>
         </div>
       )}
       
       {/* Estado vacío */}
       {!loading && !error && mediaItems.length === 0 && (
         <div className="empty-container">
-          <p>No media items found. Upload some images or videos first!</p>
+          <p>No se encontraron medios seleccionados. ¡Sube y selecciona algunas imágenes o videos primero!</p>
         </div>
       )}
       
       {/* Carrusel */}
       {!loading && !error && mediaItems.length > 0 && (
         <div className="carousel">
-          <button className="carousel-control prev" onClick={previous}>&lt;</button>
+          <button className="carousel-control prev" style={buttonStyle} onClick={previous}>&lt;</button>
           
           <div className="carousel-items">
             {getVisibleItems().map(item => (
-              <div key={item.id} className="carousel-item" onClick={() => showDetails(item)}>
-                {/* Elemento de imagen */}
-                {item.type === 'image' && (
-                  <div className="media-item">
-                    <img 
-                      src={`http://localhost:3000${item.path}`} 
-                      alt={item.originalName} 
-                      className="media-thumbnail"
+              <div key={item.uniqueId} className="carousel-item">
+                <div className="media-item">
+                  {/* Checkbox de selección */}
+                  <div className="selection-checkbox">
+                    <input
+                      type="checkbox"
+                      checked={item.seleccionada === 1}
+                      onChange={() => toggleSelection(item)}
+                      onClick={(e) => e.stopPropagation()}
                     />
-                    <div className="media-info">
-                      <p className="media-name">{item.originalName}</p>
-                    </div>
                   </div>
-                )}
-                
-                {/* Elemento de video */}
-                {item.type === 'video' && (
-                  <div className="media-item">
-                    <video 
-                      src={`http://localhost:3000${item.path}`} 
-                      className="media-thumbnail"
-                    />
-                    <div className="media-info">
-                      <p className="media-name">{item.originalName}</p>
+
+                  {/* Elemento de imagen */}
+                  {item.type === 'image' && (
+                    <div className="media-content" onClick={() => showDetails(item)}>
+                      <img 
+                        src={`http://localhost:3000/public/uploads/images/${item.nombre_archivo}`} 
+                        alt={item.nombre_original} 
+                        className="media-thumbnail"
+                      />
+                      <div className="media-info">
+                        <p className="media-name">{item.nombre_original}</p>
+                        <p className="media-size">{formatFileSize(item.tamano)}</p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
+                  
+                  {/* Elemento de video */}
+                  {item.type === 'video' && (
+                    <div className="media-content" onClick={() => showDetails(item)}>
+                      <video 
+                        src={`http://localhost:3000/public/uploads/videos/${item.nombre_archivo}`} 
+                        className="media-thumbnail"
+                        muted
+                      />
+                      <div className="media-info">
+                        <p className="media-name">{item.nombre_original}</p>
+                        <p className="media-size">{formatFileSize(parseInt(item.tamano))}</p>
+                        <p className="media-duration">{item.duracion}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             ))}
           </div>
           
-          <button className="carousel-control next" onClick={next}>&gt;</button>
+          <button className="carousel-control next" style={buttonStyle} onClick={next}>&gt;</button>
         </div>
       )}
       
       {/* Modal de detalles del elemento multimedia */}
       {selectedItem && (
         <div className="media-details-modal">
-          <div className="modal-content">
+          <div className="modal-content" style={containerStyle}>
             <div className="modal-header">
-              <h3>{selectedItem.originalName}</h3>
-              <button className="close-button" onClick={closeDetails}>&times;</button>
+              <h3 style={titleStyle}>{selectedItem.nombre_original}</h3>
+              <button className="close-button" style={buttonStyle} onClick={closeDetails}>&times;</button>
             </div>
             
             <div className="modal-body">
@@ -235,18 +323,20 @@ const MediaCarousel = () => {
                 <div>
                   <div className="media-preview">
                     <img 
-                      src={`http://localhost:3000${selectedItem.path}`} 
-                      alt={selectedItem.originalName}
+                      src={`http://localhost:3000/public/uploads/images/${selectedItem.nombre_archivo}`} 
+                      alt={selectedItem.nombre_original}
                     />
                   </div>
                   
                   <div className="media-metadata">
                     <h4>Image Details</h4>
                     <ul>
-                      <li><strong>Name:</strong> {selectedItem.originalName}</li>
-                      <li><strong>Size:</strong> {formatFileSize(selectedItem.size)}</li>
-                      <li><strong>Dimensions:</strong> {selectedItem.width} x {selectedItem.height} px</li>
-                      <li><strong>Uploaded:</strong> {formatDate(selectedItem.createdAt)}</li>
+                      <li><strong>Name:</strong> {selectedItem.nombre_original}</li>
+                      <li><strong>Size:</strong> {formatFileSize(selectedItem.tamano)}</li>
+                      <li><strong>Dimensions:</strong> {selectedItem.ancho} x {selectedItem.alto} px</li>
+                      <li><strong>Type:</strong> {selectedItem.tipo_mime}</li>
+                      <li><strong>Selected:</strong> {selectedItem.seleccionada === 1 ? 'Yes' : 'No'}</li>
+                      <li><strong>Uploaded:</strong> {formatDate(selectedItem.fecha_creacion)}</li>
                     </ul>
                   </div>
                 </div>
@@ -257,7 +347,7 @@ const MediaCarousel = () => {
                 <div>
                   <div className="media-preview">
                     <video 
-                      src={`http://localhost:3000${selectedItem.path}`} 
+                      src={`http://localhost:3000/public/uploads/videos/${selectedItem.nombre_archivo}`} 
                       controls
                     />
                   </div>
@@ -265,57 +355,94 @@ const MediaCarousel = () => {
                   <div className="media-metadata">
                     <h4>Video Details</h4>
                     <ul>
-                      <li><strong>Name:</strong> {selectedItem.originalName}</li>
-                      <li><strong>Size:</strong> {formatFileSize(selectedItem.size)}</li>
-                      <li><strong>Format:</strong> {selectedItem.format}</li>
-                      <li><strong>Duration:</strong> {formatTime(selectedItem.duration)}</li>
+                      <li><strong>Name:</strong> {selectedItem.nombre_original}</li>
+                      <li><strong>Size:</strong> {formatFileSize(parseInt(selectedItem.tamano))}</li>
+                      <li><strong>Format:</strong> {selectedItem.extension}</li>
+                      <li><strong>Duration:</strong> {selectedItem.duracion}</li>
+                      <li><strong>Selected:</strong> {selectedItem.seleccionada === 1 ? 'Yes' : 'No'}</li>
                       <li><strong>Uploaded:</strong> {formatDate(selectedItem.createdAt)}</li>
                     </ul>
                   </div>
                   
                   {/* Sección de subtítulos */}
-                  {selectedItem.subtitles && selectedItem.subtitles.length > 0 && (
+                  {(selectedItem.nombre_subtitulo_1 || selectedItem.nombre_subtitulo_2) && (
                     <div className="subtitles-section">
                       <h4>Subtítulos</h4>
-                      {selectedItem.subtitles.map(subtitle => (
-                        <div key={subtitle.id} className="subtitle-item">
-                          <h5>{subtitle.language === 'en' ? 'Inglés' : 'Español'}</h5>
-                          <div className="subtitle-preview" style={{
-                            color: subtitle.color,
-                            backgroundColor: subtitle.backgroundColor,
-                            fontSize: subtitle.fontSize,
-                            fontFamily: subtitle.fontFamily
-                          }}>
-                            {subtitle.entries && subtitle.entries.length > 0 ? (
-                              <div className="subtitle-entries">
-                                {subtitle.entries.map((entry, index) => (
-                                  <div key={index} className="subtitle-entry">
-                                    <span className="time-range">
-                                      {formatTime(entry.startTime)} - {formatTime(entry.endTime)}
-                                    </span>
-                                    <p>{entry.text}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              subtitle.text || 'Sin texto de subtítulos'
-                            )}
+                      
+                      {selectedItem.nombre_subtitulo_1 && (
+                        <div className="subtitle-item">
+                          <h5>Español</h5>
+                          <div className="subtitle-file">
+                            <p><strong>File:</strong> {selectedItem.nombre_subtitulo_1}</p>
+                            <video 
+                              src={`http://localhost:3000/public/uploads/videos/${selectedItem.nombre_archivo}`}
+                              controls
+                              style={{ width: '100%', maxWidth: '400px' }}
+                            >
+                              <track 
+                                kind="subtitles" 
+                                src={`http://localhost:3000/public/uploads/subtitles/${selectedItem.nombre_subtitulo_1}`}
+                                srcLang="es" 
+                                label="Español"
+                                default
+                              />
+                            </video>
                           </div>
                         </div>
-                      ))}
+                      )}
+
+                      {selectedItem.nombre_subtitulo_2 && (
+                        <div className="subtitle-item">
+                          <h5>English</h5>
+                          <div className="subtitle-file">
+                            <p><strong>File:</strong> {selectedItem.nombre_subtitulo_2}</p>
+                            <video 
+                              src={`http://localhost:3000/public/uploads/videos/${selectedItem.nombre_archivo}`}
+                              controls
+                              style={{ width: '100%', maxWidth: '400px' }}
+                            >
+                              <track 
+                                kind="subtitles" 
+                                src={`http://localhost:3000/public/uploads/subtitles/${selectedItem.nombre_subtitulo_2}`}
+                                srcLang="en" 
+                                label="English"
+                                default
+                              />
+                            </video>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                   
                   {/* Sección de pistas de audio */}
-                  {selectedItem.audioTracks && selectedItem.audioTracks.length > 0 && (
+                  {(selectedItem.nombre_audio_1 || selectedItem.nombre_audio_2) && (
                     <div className="audio-tracks-section">
                       <h4>Audio Tracks</h4>
-                      {selectedItem.audioTracks.map(track => (
-                        <div key={track.id} className="audio-item">
-                          <h5>{track.language === 'en' ? 'English' : 'Spanish'}</h5>
-                          <audio src={`http://localhost:3000${track.path}`} controls />
+                      
+                      {selectedItem.nombre_audio_1 && (
+                        <div className="audio-item">
+                          <h5>Español</h5>
+                          <p><strong>File:</strong> {selectedItem.nombre_audio_1}</p>
+                          <audio 
+                            src={`http://localhost:3000/public/uploads/audio/${selectedItem.nombre_audio_1}`} 
+                            controls 
+                            style={{ width: '100%' }}
+                          />
                         </div>
-                      ))}
+                      )}
+
+                      {selectedItem.nombre_audio_2 && (
+                        <div className="audio-item">
+                          <h5>English</h5>
+                          <p><strong>File:</strong> {selectedItem.nombre_audio_2}</p>
+                          <audio 
+                            src={`http://localhost:3000/public/uploads/audio/${selectedItem.nombre_audio_2}`} 
+                            controls 
+                            style={{ width: '100%' }}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -323,7 +450,7 @@ const MediaCarousel = () => {
             </div>
             
             <div className="modal-footer">
-              <button className="btn btn-primary" onClick={closeDetails}>Close</button>
+              <button className="btn btn-primary" style={buttonStyle} onClick={closeDetails}>Cerrar</button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { useAuth } from '../../../services/AuthContext';
 import { SubtitleGenerator } from '../utils/subtitle-generator';
 import TangramLoader from '../../../components/tangram-loader/TangramLoader';
 import './VideoUpload.css';
@@ -8,6 +9,9 @@ import './VideoUpload.css';
  * VideoUpload Component - Permite subir videos con subtítulos y pistas de audio
  */
 const VideoUpload = () => {
+  // Auth context
+  const { getUserId } = useAuth();
+  
   // Referencias
   const videoRef = useRef(null);
   
@@ -28,6 +32,10 @@ const VideoUpload = () => {
   const [uploadError, setUploadError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadedVideoUrl, setUploadedVideoUrl] = useState('');
+  
+  // Estado para videos del usuario y selección
+  const [userVideos, setUserVideos] = useState([]);
+  const [isLoadingVideos, setIsLoadingVideos] = useState(false);
   
   // Subtítulos
   const [subtitles, setSubtitles] = useState([
@@ -81,6 +89,60 @@ const VideoUpload = () => {
   // Control de audio activo
   const [activeAudioTrack, setActiveAudioTrack] = useState('original'); // 'original', 'en', 'es'
   
+  // Cargar videos del usuario
+  const loadUserVideos = async () => {
+    const userId = getUserId();
+    if (!userId) {
+      console.error('No user ID available');
+      return;
+    }
+    
+    setIsLoadingVideos(true);
+    try {
+      const response = await axios.get(`http://localhost:3000/videos?userId=${userId}`);
+      setUserVideos(response.data.videos);
+    } catch (error) {
+      console.error('Error loading videos:', error);
+    } finally {
+      setIsLoadingVideos(false);
+    }
+  };
+
+  // Alternar selección de video
+  const toggleVideoSelection = async (videoId) => {
+    const userId = getUserId();
+    if (!userId) {
+      console.error('No user ID available for selection');
+      return;
+    }
+
+    const currentVideo = userVideos.find(vid => vid.id === videoId);
+    if (!currentVideo) {
+      console.error('Video not found');
+      return;
+    }
+
+    const newSelectionState = currentVideo.seleccionada === 1 ? 0 : 1;
+
+    try {
+      await axios.put(`http://localhost:3000/videos/${videoId}/select`, {
+        userId: userId,
+        selected: newSelectionState
+      });
+
+      setUserVideos(prevVideos => 
+        prevVideos.map(vid => 
+          vid.id === videoId 
+            ? { ...vid, seleccionada: newSelectionState }
+            : vid
+        )
+      );
+    } catch (error) {
+      console.error('Error updating video selection:', error);
+      alert('Error al actualizar la selección de video');
+    }
+  };
+
   // Función para cambiar pista de audio y asegurar sincronización
   const switchAudioTrack = (trackType) => {
     // Pausar todos los audios primero
@@ -117,8 +179,34 @@ const VideoUpload = () => {
   // URL de la API
   const apiUrl = 'http://localhost:3000/videos';
   
-  // User ID (should be passed as prop or from context/auth)
-  const userId = 1; // Default for testing - should be dynamic
+  // User ID from authentication context (already imported above)
+  const userId = getUserId();
+  
+  // Cargar y aplicar estilos predeterminados del usuario
+  useEffect(() => {
+    const loadDefaultStyles = async () => {
+      try {
+        const response = await axios.get(`${apiUrl}/default-styles?userId=${userId}`);
+        const { styles } = response.data;
+        
+        if (styles) {
+          // Aplicar estilos predeterminados inmediatamente
+          applySubtitleStylesToVideo(
+            styles.textColor,
+            styles.backgroundColor,
+            styles.fontSize,
+            null
+          );
+        }
+      } catch (error) {
+        console.warn('No se pudieron cargar estilos predeterminados, usando fallback:', error);
+        // Los estilos CSS por defecto se aplicarán automáticamente
+      }
+    };
+    
+    loadDefaultStyles();
+    loadUserVideos();
+  }, [userId]);
   
   // Limpiar URLs de blob al desmontar el componente
   useEffect(() => {
@@ -670,11 +758,7 @@ const VideoUpload = () => {
     try {
       const response = await axios.post(`${apiUrl}/${videoId}/subtitles`, {
         language: subtitle.language,
-        entries: subtitle.entries,
-        textColor: subtitle.color,
-        backgroundColor: subtitle.backgroundColor,
-        fontSize: subtitle.fontSize,
-        fontFamily: subtitle.fontFamily || subtitle.fontFile
+        entries: subtitle.entries
       });
       
       console.log(`Subtítulos para ${subtitle.language} subidos correctamente:`, response.data);
@@ -875,21 +959,6 @@ const VideoUpload = () => {
     const milliseconds = Math.floor((seconds % 1) * 1000);
     
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
-  };
-
-  // Actualizar estilos de subtítulos en el servidor
-  const updateSubtitleStyling = async (videoId, textColor, backgroundColor) => {
-    try {
-      const response = await axios.put(`${apiUrl}/${videoId}/subtitle-styling`, {
-        textColor,
-        backgroundColor
-      });
-      console.log('Estilos de subtítulos actualizados:', response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error actualizando estilos de subtítulos:', error);
-      throw error;
-    }
   };
 
   // Manejar selección de archivo VTT
@@ -1224,7 +1293,7 @@ const VideoUpload = () => {
 
   return (
     <div className="video-upload-container">
-      <TangramLoader isLoading={isUploading} onSkip={() => setIsUploading(false)} />
+      <TangramLoader isLoading={isUploading} onSkip={() => setIsUploading(false)} userId={getUserId()} />
       {!videoPreview ? (
         <div className="upload-section">
           <h2>Subir Video</h2>
@@ -1460,8 +1529,8 @@ const VideoUpload = () => {
             ))}
           </div>
           
-          {/* Controles globales de estilo de subtítulos */}
-          {subtitles.some(subtitle => subtitle.vttUrl) && (
+          {/* Controles globales de estilo de subtítulos - REMOVIDOS */}
+          {false && (
             <div className="global-subtitle-colors">
               <h3>Personalizar Estilo de Subtítulos</h3>
               <div className="subtitle-color-controls">
@@ -1674,7 +1743,7 @@ const VideoUpload = () => {
                   </div>
                 </div>
                 
-                <div className="subtitle-styles">
+                <div className="subtitle-styles" style={{ display: 'none' }}>
                   <h4>Estilos de Subtítulos</h4>
                   
                   <div className="style-options">
@@ -1800,6 +1869,52 @@ const VideoUpload = () => {
           </div>
         </div>
       )}
+      
+      {/* Lista de Videos del Usuario */}
+      <div className="user-videos-section">
+        <h3>Mis Videos</h3>
+        {isLoadingVideos ? (
+          <p>Cargando videos...</p>
+        ) : userVideos.length === 0 ? (
+          <p>No tienes videos subidos.</p>
+        ) : (
+          <div className="videos-grid">
+            {userVideos.map(video => (
+              <div key={video.id} className={`video-card ${video.seleccionada === 1 ? 'selected' : ''}`}>
+                <div className="video-card-header">
+                  {video.seleccionada === 1 && (
+                    <span className="selection-badge">Seleccionado</span>
+                  )}
+                </div>
+                
+                <div className="video-preview">
+                  <video 
+                    src={`http://localhost:3000/public/uploads/videos/${video.nombre_archivo}`}
+                    controls
+                    style={{ width: '100%', maxHeight: '200px' }}
+                  />
+                </div>
+                
+                <div className="video-info">
+                  <h4>{video.nombre_original}</h4>
+                  <p><strong>Tamaño:</strong> {Math.round(video.tamano / 1024 / 1024 * 100) / 100} MB</p>
+                  <p><strong>Duración:</strong> {video.duracion}</p>
+                  <p><strong>Formato:</strong> {video.extension}</p>
+                </div>
+                
+                <div className="video-card-actions">
+                  <button 
+                    onClick={() => toggleVideoSelection(video.id)} 
+                    className={`btn ${video.seleccionada === 1 ? 'btn-warning' : 'btn-primary'}`}
+                  >
+                    {video.seleccionada === 1 ? 'Deseleccionar' : 'Seleccionar'}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
