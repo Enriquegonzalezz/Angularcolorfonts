@@ -3,6 +3,7 @@ import Cropper from 'cropperjs';
 import axios from 'axios';
 import 'cropperjs/dist/cropper.min.css';
 import './ImageUpload.css';
+import { useAuth } from '../../../services/AuthContext';
 
 const ImageUpload = () => {
   // Referencias a elementos DOM
@@ -37,6 +38,10 @@ const ImageUpload = () => {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [uploadedImageUrl, setUploadedImageUrl] = useState('');
+  const [originalWidth, setOriginalWidth] = useState(0);
+  const [originalHeight, setOriginalHeight] = useState(0);
+  const { getUserId } = useAuth();
+  const userId = getUserId();
   
   // Función para formatear bytes a KB, MB, etc.
   const formatBytes = (bytes, decimals = 2) => {
@@ -78,6 +83,8 @@ const ImageUpload = () => {
             ...prev,
             dimensions: `${imageToCropRef.current.naturalWidth} x ${imageToCropRef.current.naturalHeight} px`
           }));
+          setOriginalWidth(imageToCropRef.current.naturalWidth || 0);
+          setOriginalHeight(imageToCropRef.current.naturalHeight || 0);
           
           setShowCropperContainer(true);
           setShowCropButton(true);
@@ -161,6 +168,11 @@ const ImageUpload = () => {
       return;
     }
     
+    if (!userId) {
+      setUploadError('No se encontró el usuario. Inicia sesión para subir imágenes.');
+      return;
+    }
+    
     setIsUploading(true);
     setUploadProgress(0);
     setUploadError('');
@@ -180,9 +192,22 @@ const ImageUpload = () => {
       // Crear FormData para enviar al servidor
       const formData = new FormData();
       formData.append('image', blob, `recorte-${originalFile.name}`);
+      formData.append('userId', String(userId));
+      formData.append('isCropped', 'true');
+      formData.append('originalWidth', String(originalWidth || 0));
+      formData.append('originalHeight', String(originalHeight || 0));
+      // Datos de recorte desde Cropper.js (coordenadas y dimensiones)
+      try {
+        const cropData = cropper ? cropper.getData() : null;
+        if (cropData) {
+          formData.append('cropData', JSON.stringify(cropData));
+        }
+      } catch (e) {
+        console.warn('No se pudo obtener cropData del cropper:', e);
+      }
       
       // Enviar al servidor
-      const response = await axios.post('http://localhost:3000/api/images/upload', formData, {
+      const response = await axios.post('http://localhost:3000/images/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         },
@@ -196,7 +221,13 @@ const ImageUpload = () => {
       
       // Actualizar estado con la respuesta del servidor
       setUploadSuccess(true);
-      setUploadedImageUrl(response.data.url);
+      const returnedImage = response?.data?.image;
+      if (returnedImage?.imageUrl) {
+        setUploadedImageUrl(`http://localhost:3000/public${returnedImage.imageUrl}`);
+      } else if (response?.data?.url) {
+        // Compatibilidad con el endpoint antiguo
+        setUploadedImageUrl(response.data.url);
+      }
       console.log('Imagen guardada exitosamente:', response.data);
     } catch (error) {
       console.error('Error al guardar la imagen:', error);

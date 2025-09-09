@@ -26,7 +26,7 @@ const fs = require('fs');
 const { create } = require('domain');
 
 app.use(cors({
-  origin: 'http://localhost:5173', // tu frontend
+  origin: 'http://localhost:5175', // tu frontend
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true
 }));
