@@ -1,9 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { NavbarComponent } from '../../components/navbar/navbar';
 
 interface ColorRow {
   id: number;
@@ -13,16 +12,17 @@ interface ColorRow {
   color_4: string;
   color_5: string;
   is_default: boolean;
+  predeterminado?: number; // Para compatibilidad con el backend
 }
 
 @Component({
   selector: 'app-color-view',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [CommonModule, FormsModule],
   templateUrl: './color-view.html',
   styleUrl: './color-view.css'
 })
-export class ColorViewComponent implements OnInit {
+export class ColorViewComponent implements OnInit, OnDestroy {
   colors: string[] = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
   savedColors: ColorRow[] = [];
   defaultColorId: number | null = null;
@@ -32,12 +32,10 @@ export class ColorViewComponent implements OnInit {
     private http: HttpClient,
     private router: Router
   ) {
-    // Ensure editRow is properly initialized as null
     this.editRow = null;
   }
 
   ngOnInit() {
-    // Force editRow to be null at the start
     this.editRow = null;
     this.fetchColors();
     console.log('ColorView initialized - editRow:', this.editRow, 'isValid:', this.isValidColorPalette());
@@ -45,11 +43,11 @@ export class ColorViewComponent implements OnInit {
 
   // Handle setting default color
   handleSetDefault(colorId: number) {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     if (this.defaultColorId === colorId) {
       this.defaultColorId = null;
@@ -65,43 +63,66 @@ export class ColorViewComponent implements OnInit {
       });
 
       // Save changes to the server
-      // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
       this.http.put(`http://localhost:3000/colors/update/${colorId}`, {
         is_default: true
-      }).subscribe({
+      }, { headers }).subscribe({
         next: () => {
           console.log('Default color updated successfully');
         },
         error: (error) => {
           console.error('Error updating default color:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
     }
   }
 
+  // Nuevo método para manejar el toggle de predeterminado como en React
+  handleToggleDefault(colorId: number) {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    
+    this.http.put(`http://localhost:3000/colors/update/predeterminado/${colorId}`, {}, { headers })
+      .subscribe({
+        next: () => {
+          console.log('Predeterminado actualizado exitosamente');
+          this.fetchColors(); // Refrescar la lista
+        },
+        error: (error) => {
+          console.error('Error al actualizar el predeterminado:', error);
+          this.router.navigate(['/login']);
+        }
+      });
+  }
+
   fetchColors() {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<ColorRow[]>('http://localhost:3000/colors')
+    this.http.get<ColorRow[]>('http://localhost:3000/colors', { headers })
       .subscribe({
         next: (data) => {
           this.savedColors = data;
           // Find the default color set
-          const defaultColor = data.find(color => color.is_default);
+          const defaultColor = data.find(color => color.is_default || color.predeterminado === 1);
           if (defaultColor) {
             this.defaultColorId = defaultColor.id;
           }
         },
         error: (error) => {
           console.error('Error al obtener los colores:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -117,6 +138,12 @@ export class ColorViewComponent implements OnInit {
   }
 
   handleSave() {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
     console.log('Botón de guardar presionado');
     console.log('Colores actuales:', this.colors);
     console.log('¿Es válida la paleta?', this.isValidColorPalette());
@@ -134,20 +161,20 @@ export class ColorViewComponent implements OnInit {
       return;
     }
 
-    const colorData: ColorRow = {
-      id: 0, // Este valor lo establecerá el servidor
+    const colorData = {
       color_1: this.colors[0],
       color_2: this.colors[1],
       color_3: this.colors[2],
       color_4: this.colors[3],
-      color_5: this.colors[4],
-      is_default: this.defaultColorId === null
+      color_5: this.colors[4]
     };
 
     console.log('Enviando datos al servidor:', colorData);
 
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+
     try {
-      this.http.post('http://localhost:3000/colors/store', colorData)
+      this.http.post('http://localhost:3000/colors/store', colorData, { headers })
         .subscribe({
           next: (response) => {
             console.log('Respuesta del servidor:', response);
@@ -161,6 +188,7 @@ export class ColorViewComponent implements OnInit {
             if (error.status === 0) {
               console.error('No se pudo conectar al servidor. ¿Está ejecutando el servidor backend en http://localhost:3000?');
             }
+            this.router.navigate(['/login']);
           }
         });
     } catch (error) {
@@ -169,25 +197,25 @@ export class ColorViewComponent implements OnInit {
   }
 
   handleDelete(colorId: number) {
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     // If deleting default color, clear defaultColorId
     if (this.defaultColorId === colorId) {
       this.defaultColorId = null;
     }
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.delete(`http://localhost:3000/colors/delete/${colorId}`)
+    this.http.delete(`http://localhost:3000/colors/delete/${colorId}`, { headers })
       .subscribe({
         next: () => this.savedColors = this.savedColors.filter(row => row.id !== colorId),
         error: error => {
           console.error('Error al eliminar el color:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -198,7 +226,7 @@ export class ColorViewComponent implements OnInit {
     this.colors = [row.color_1, row.color_2, row.color_3, row.color_4, row.color_5];
 
     // Set default color if this was the default one
-    if (row.is_default) {
+    if (row.is_default || row.predeterminado === 1) {
       this.defaultColorId = row.id;
     }
   }
@@ -206,26 +234,24 @@ export class ColorViewComponent implements OnInit {
   handleUpdate() {
     if (this.editRow === null) return;
 
-    // const token = localStorage.getItem('access_token');
-    // if (!token) {
-    //   this.router.navigate(['/login']);
-    //   return;
-    // }
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
 
     const colorId = this.savedColors[this.editRow].id;
-    const colorData: ColorRow = {
-      id: colorId,
+    const colorData = {
       color_1: this.colors[0],
       color_2: this.colors[1],
       color_3: this.colors[2],
       color_4: this.colors[3],
-      color_5: this.colors[4],
-      is_default: this.defaultColorId === colorId
+      color_5: this.colors[4]
     };
 
-    // const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.put(`http://localhost:3000/colors/update/${colorId}`, colorData)
+    this.http.put(`http://localhost:3000/colors/update/${colorId}`, colorData, { headers })
       .subscribe({
         next: () => {
           this.fetchColors();
@@ -234,7 +260,7 @@ export class ColorViewComponent implements OnInit {
         },
         error: error => {
           console.error('Error al actualizar los colores:', error);
-          // this.router.navigate(['/login']);
+          this.router.navigate(['/login']);
         }
       });
   }
@@ -251,5 +277,19 @@ export class ColorViewComponent implements OnInit {
     console.log('Force reset - editRow:', this.editRow, 'type:', typeof this.editRow);
     this.editRow = null;
     this.colors = ['#000000', '#FFFFFF', '#F596D3', '#D247BF', '#61DAFB'];
+  }
+
+  // Método para navegar a la página de fuentes
+  goToFonts() {
+    this.router.navigate(['/fonts']);
+  }
+
+  // Método para regresar al home
+  goToHome() {
+    this.router.navigate(['/']);
+  }
+
+  ngOnDestroy() {
+    // Cleanup code if needed
   }
 }

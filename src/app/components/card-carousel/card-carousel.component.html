@@ -4,6 +4,9 @@
     (click)="scroll('prev')"
     [disabled]="currentIndex === 0"
     aria-label="Anterior"
+    [style.background]="colors[2]"
+    [style.color]="colors[1]"
+    [style.border-color]="colors[0]"
   >
     <span class="material-icons">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -17,14 +20,28 @@
       <div 
         *ngFor="let card of cards; trackBy: trackByFn"
         class="card"
+        [style.background]="colors[3]"
+        [style.color]="colors[0]"
+        [style.border-color]="colors[2]"
       >
         <div class="card-image">
           <img [src]="card.imageUrl" [alt]="card.title">
         </div>
         <div class="card-content">
-          <h3 class="card-title">{{ card.title }}</h3>
-          <p class="card-description">{{ card.description }}</p>
-          <button class="card-button">
+          <h3 class="card-title" 
+              [style.color]="colors[2]"
+              [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+              [style.font-size.px]="sizes.subtitle">{{ card.title }}</h3>
+          <p class="card-description" 
+             [style.color]="colors[0]"
+             [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+             [style.font-size.px]="sizes.paragraph">{{ card.description }}</p>
+          <button class="card-button"
+                  [style.background]="colors[2]"
+                  [style.color]="colors[1]"
+                  [style.border-color]="colors[0]"
+                  [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                  [style.font-size.px]="sizes.paragraph">
             {{ card.buttonText }}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -40,6 +57,9 @@
     (click)="scroll('next')"
     [disabled]="currentIndex >= cards.length - visibleCards"
     aria-label="Siguiente"
+    [style.background]="colors[2]"
+    [style.color]="colors[1]"
+    [style.border-color]="colors[0]"
   >
     <span class="material-icons">
       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -54,6 +74,8 @@
       [class.active]="i === currentIndex"
       (click)="scrollToIndex(i)"
       [attr.aria-label]="'Ir a la tarjeta ' + (i + 1)"
+      [style.background]="i === currentIndex ? colors[2] : colors[4]"
+      [style.border-color]="colors[2]"
     ></button>
   </div>
 </div>

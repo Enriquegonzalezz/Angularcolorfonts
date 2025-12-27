@@ -1,65 +1,74 @@
-<app-navbar></app-navbar>
-<div class="signup-container">
-  <div class="signup-card">
-    <div class="signup-card-border"></div>
-    <div class="signup-card-content">
-      <div class="signup-header">
-        <h1 class="signup-title">Create your account</h1>
-        <p class="signup-subtitle">Join us today</p>
+<div class="min-h-screen bg-dark py-6 flex flex-col justify-center items-center sm:py-12">
+  <div class="relative py-3 sm:max-w-xl sm:mx-auto">
+    <div class="absolute inset-0 bg-card border-2 border-green-500 shadow-lg rounded-3xl"></div>
+    <div class="relative px-4 py-10 bg-card border-2 border-green-500 shadow-lg rounded-3xl sm:p-12">
+      <div class="text-center mb-8">
+        <h1 class="text-2xl font-semibold text-green-400 mb-2">
+          Create your account
+        </h1>
+        <p class="text-gray-400">Join us today</p>
       </div>
 
-      <div class="error-message" *ngIf="error">
+      <div *ngIf="error" class="p-3 bg-red-900/50 border border-red-500 text-red-300 rounded-lg text-sm mb-6">
         {{ error }}
       </div>
 
-      <form (submit)="handleSubmit($event)" class="signup-form">
-        <div class="form-group">
+      <form (submit)="handleSubmit($event)" class="space-y-6">
+        <div class="space-y-1">
           <input
             id="username"
             name="username"
             type="text"
             [(ngModel)]="formData.username"
             (input)="handleChange($event)"
-            class="form-input"
+            class="bg-[#23272e] border-green-500 text-gray-200 placeholder-gray-500 w-full"
             placeholder="Username"
-            required>
-          <span class="input-hint">Choose a unique username</span>
+            required
+            style="padding-top: 1.25rem; padding-bottom: 1.25rem; border-width: 2px; border-radius: 0.375rem; padding-left: 0.75rem; padding-right: 0.75rem;">
+          <span class="text-xs text-gray-500 block mt-1 ml-1">
+            Choose a unique username
+          </span>
         </div>
 
-        <div class="form-group">
+        <div class="space-y-1">
           <input
             id="email"
             name="email"
             type="email"
             [(ngModel)]="formData.email"
             (input)="handleChange($event)"
-            class="form-input"
+            class="bg-[#23272e] border-green-500 text-gray-200 placeholder-gray-500 w-full"
             placeholder="Email address"
-            required>
+            required
+            style="padding-top: 1.25rem; padding-bottom: 1.25rem; border-width: 2px; border-radius: 0.375rem; padding-left: 0.75rem; padding-right: 0.75rem;">
         </div>
 
-        <div class="form-group">
+        <div class="space-y-1">
           <input
             id="password"
             name="password"
             type="password"
             [(ngModel)]="formData.password"
             (input)="handleChange($event)"
-            class="form-input"
+            class="bg-[#23272e] border-green-500 text-gray-200 placeholder-gray-500 w-full"
             placeholder="Password"
             required
-            minlength="6">
-          <span class="input-hint">At least 6 characters</span>
+            minlength="6"
+            style="padding-top: 1.25rem; padding-bottom: 1.25rem; border-width: 2px; border-radius: 0.375rem; padding-left: 0.75rem; padding-right: 0.75rem;">
+          <span class="text-xs text-gray-500 block mt-1 ml-1">
+            At least 6 characters
+          </span>
         </div>
 
         <button
           type="submit"
-          class="signup-button"
-          [disabled]="isLoading">
-          <span *ngIf="isLoading" class="loading-spinner">
-            <svg class="spinner" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="spinner-circle" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="spinner-path" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          class="w-full bg-green-600 hover:bg-green-700 text-white border-2 border-green-500 py-5 font-medium rounded"
+          [disabled]="isLoading"
+          style="transition: background-color 0.2s;">
+          <span *ngIf="isLoading" class="animate-pulse flex items-center justify-center gap-2">
+            <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
             Creating account...
           </span>
@@ -67,16 +76,21 @@
         </button>
       </form>
 
-      <div class="signup-footer">
-        <div class="divider">
-          <div class="divider-line"></div>
-          <span class="divider-text">OR</span>
-          <div class="divider-line"></div>
+      <div class="text-center pt-6">
+        <div class="relative flex items-center justify-center mb-6">
+          <div class="flex-grow border-t border-gray-700"></div>
+          <span class="flex-shrink mx-4 text-gray-500 text-sm">OR</span>
+          <div class="flex-grow border-t border-gray-700"></div>
         </div>
 
-        <p class="login-text">
+        <p class="text-gray-400 text-sm">
           Already have an account?
-          <a routerLink="/login" class="login-link">Login</a>
+          <a 
+            routerLink="/login" 
+            class="text-green-400 hover:underline font-medium"
+            style="text-shadow: 0 0 5px rgba(74, 222, 128, 0.3);">
+            Login
+          </a>
         </p>
       </div>
     </div>

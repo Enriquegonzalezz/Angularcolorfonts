@@ -10,11 +10,20 @@
         <div class="avatar-fallback" [style.background]="colors[2]" [style.color]="colors[1]">EG</div>
       </div>
       <div class="card-title-section">
-        <h3 class="card-title" [style.color]="colors[2]">Enrique Gonzalez</h3>
-        <p class="card-description" [style.color]="colors[0]">&#64;kikegonza</p>
+        <h3 class="card-title" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.subtitle">Enrique Gonzalez</h3>
+        <p class="card-description" 
+           [style.color]="colors[0]"
+           [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+           [style.font-size.px]="sizes.paragraph">&#64;kikegonza</p>
       </div>
     </div>
-    <div class="card-content" [style.color]="colors[0]">
+    <div class="card-content" 
+         [style.color]="colors[0]"
+         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+         [style.font-size.px]="sizes.paragraph">
       Funciona perfecto!
     </div>
   </div>
@@ -26,10 +35,16 @@
        [style.box-shadow]="'0 4px 32px 0 ' + colors[4] + '44'"
        [style.border]="'2px solid ' + colors[2]">
     <div class="card-header">
-      <h3 class="card-title" [style.color]="colors[2]">samuel molina</h3>
+      <h3 class="card-title" 
+          [style.color]="colors[2]"
+          [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+          [style.font-size.px]="sizes.subtitle">samuel molina</h3>
       <p class="card-description" [style.color]="colors[0]"></p>
     </div>
-    <div class="card-content" [style.color]="colors[0]">
+    <div class="card-content" 
+         [style.color]="colors[0]"
+         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+         [style.font-size.px]="sizes.paragraph">
       <p>
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
         eiusmod tempor incididunt ut labore et dolore magna aliqua.
@@ -69,19 +84,33 @@
        [style.border]="'2px solid ' + colors[2]">
     <div class="card-header">
       <div class="pricing-title">
-        <h3 class="card-title" [style.color]="colors[2]">Gratis</h3>
+        <h3 class="card-title" 
+            [style.color]="colors[2]"
+            [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+            [style.font-size.px]="sizes.subtitle">Gratis</h3>
         <span class="badge"
               [style.background]="colors[2]"
               [style.color]="colors[1]"
-              [style.border]="'1px solid ' + colors[4]">
+              [style.border]="'1px solid ' + colors[4]"
+              [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+              [style.font-size.px]="sizes.paragraph">
           el mas popular
         </span>
       </div>
       <div class="pricing-amount">
-        <span class="price" [style.color]="colors[0]">$0</span>
-        <span class="period" [style.color]="colors[2]"> /month</span>
+        <span class="price" 
+              [style.color]="colors[0]"
+              [style.font-family]="fonts[0] ? 'CustomFont1, sans-serif' : 'inherit'"
+              [style.font-size.px]="sizes.title">$0</span>
+        <span class="period" 
+              [style.color]="colors[2]"
+              [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+              [style.font-size.px]="sizes.paragraph"> /month</span>
       </div>
-      <p class="card-description" [style.color]="colors[0]">
+      <p class="card-description" 
+         [style.color]="colors[0]"
+         [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+         [style.font-size.px]="sizes.paragraph">
         Lorem ipsum dolor sit, amet ipsum consectetur adipisicing elit.
       </p>
     </div>
@@ -89,7 +118,9 @@
       <button class="btn btn-primary"
               [style.background]="colors[2]"
               [style.color]="colors[1]"
-              [style.border-color]="colors[0]">
+              [style.border-color]="colors[0]"
+              [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+              [style.font-size.px]="sizes.paragraph">
         empezar prueba ahora
       </button>
     </div>
@@ -100,7 +131,9 @@
           <svg class="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" [style.color]="colors[2]">
             <path d="M20 6L9 17L4 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
-          <span [style.color]="colors[0]">{{ benefit }}</span>
+          <span [style.color]="colors[0]"
+                [style.font-family]="fonts[1] ? 'CustomFont2, sans-serif' : 'inherit'"
+                [style.font-size.px]="sizes.paragraph">{{ benefit }}</span>
         </div>
       </div>
     </div>

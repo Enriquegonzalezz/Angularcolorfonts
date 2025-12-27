@@ -1,0 +1,162 @@
+<div class="carousel-container">
+  <h2>Media Gallery</h2>
+  
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="loading-container">
+      <div class="spinner"></div>
+      <p>Loading media items...</p>
+    </div>
+  }
+  
+  <!-- Error State -->
+  @if (error) {
+    <div class="error-container">
+      <p class="error-message">{{ error }}</p>
+      <button class="btn btn-primary" (click)="loadMediaItems()">Try Again</button>
+    </div>
+  }
+  
+  <!-- Empty State -->
+  @if (!loading && !error && mediaItems.length === 0) {
+    <div class="empty-container">
+      <p>No media items found. Upload some images or videos first!</p>
+    </div>
+  }
+  
+  <!-- Carousel -->
+  @if (!loading && !error && mediaItems.length > 0) {
+    <div class="carousel">
+      <button class="carousel-control prev" (click)="previous()">&lt;</button>
+      
+      <div class="carousel-items">
+        @for (item of visibleItems; track item.id) {
+          <div class="carousel-item" (click)="showDetails(item)">
+            <!-- Image Item -->
+            @if (item.type === 'image') {
+              <div class="media-item">
+                <img [src]="'http://localhost:3000' + item.path" [alt]="item.originalName" class="media-thumbnail">
+                <div class="media-info">
+                  <p class="media-name">{{ item.originalName }}</p>
+                </div>
+              </div>
+            }
+            
+            <!-- Video Item -->
+            @if (item.type === 'video') {
+              <div class="media-item">
+                <video [src]="'http://localhost:3000' + item.path" class="media-thumbnail"></video>
+                <div class="media-info">
+                  <p class="media-name">{{ item.originalName }}</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+      
+      <button class="carousel-control next" (click)="next()">&gt;</button>
+    </div>
+  }
+  
+  <!-- Media Details Modal -->
+  @if (selectedItem) {
+    <div class="media-details-modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>{{ selectedItem.originalName }}</h3>
+          <button class="close-button" (click)="closeDetails()">&times;</button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Image Details -->
+          @if (selectedItem.type === 'image') {
+            <div>
+              <div class="media-preview">
+                <img [src]="'http://localhost:3000' + selectedItem.path" [alt]="selectedItem.originalName">
+              </div>
+              
+              <div class="media-metadata">
+                <h4>Image Details</h4>
+                <ul>
+                  <li><strong>Name:</strong> {{ selectedItem.originalName }}</li>
+                  <li><strong>Size:</strong> {{ formatFileSize(selectedItem.size) }}</li>
+                  <li><strong>Dimensions:</strong> {{ selectedItem.width }} x {{ selectedItem.height }} px</li>
+                  <li><strong>Uploaded:</strong> {{ selectedItem.createdAt | date:'medium' }}</li>
+                </ul>
+              </div>
+            </div>
+          }
+          
+          <!-- Video Details -->
+          @if (selectedItem.type === 'video') {
+            <div>
+              <div class="media-preview">
+                <video [src]="'http://localhost:3000' + selectedItem.path" controls></video>
+              </div>
+              
+              <div class="media-metadata">
+                <h4>Video Details</h4>
+                <ul>
+                  <li><strong>Name:</strong> {{ selectedItem.originalName }}</li>
+                  <li><strong>Size:</strong> {{ formatFileSize(selectedItem.size) }}</li>
+                  <li><strong>Format:</strong> {{ selectedItem.format }}</li>
+                  <li><strong>Duration:</strong> {{ formatTime(selectedItem.duration) }}</li>
+                  <li><strong>Uploaded:</strong> {{ selectedItem.createdAt | date:'medium' }}</li>
+                </ul>
+              </div>
+              
+              <!-- Subtitles Section -->
+              @if (selectedItem.subtitles && selectedItem.subtitles.length > 0) {
+                <div class="subtitles-section">
+                  <h4>Subtítulos</h4>
+                  @for (subtitle of selectedItem.subtitles; track subtitle.id) {
+                    <div class="subtitle-item">
+                      <h5>{{ subtitle.language === 'en' ? 'Inglés' : 'Español' }}</h5>
+                      <div class="subtitle-preview" [ngStyle]="{
+                        'color': subtitle.color,
+                        'background-color': subtitle.backgroundColor,
+                        'font-size': subtitle.fontSize,
+                        'font-family': subtitle.fontFamily
+                      }">
+                        @if (subtitle.entries && subtitle.entries.length > 0) {
+                          <div class="subtitle-entries">
+                            @for (entry of subtitle.entries; track $index) {
+                              <div class="subtitle-entry">
+                                <span class="time-range">{{ formatTime(entry.startTime) }} - {{ formatTime(entry.endTime) }}</span>
+                                <p>{{ entry.text }}</p>
+                              </div>
+                            }
+                          </div>
+                        } @else {
+                          {{ subtitle.text || 'Sin texto de subtítulos' }}
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+              
+              <!-- Audio Tracks Section -->
+              @if (selectedItem.audioTracks && selectedItem.audioTracks.length > 0) {
+                <div class="audio-tracks-section">
+                  <h4>Audio Tracks</h4>
+                  @for (track of selectedItem.audioTracks; track track.id) {
+                    <div class="audio-item">
+                      <h5>{{ track.language === 'en' ? 'English' : 'Spanish' }}</h5>
+                      <audio [src]="'http://localhost:3000' + track.path" controls></audio>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+        
+        <div class="modal-footer">
+          <button class="btn btn-primary" (click)="closeDetails()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

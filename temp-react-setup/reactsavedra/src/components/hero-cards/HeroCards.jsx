@@ -1,0 +1,212 @@
+import React from 'react';
+import { useStyles } from '../../services/StyleContext';
+import './HeroCards.css';
+
+const HeroCards = () => {
+  const { colors, fonts, sizes, loading } = useStyles();
+  
+  // Lista de beneficios para la tarjeta de precios
+  const benefits = ['4 Team member', '4 GB Storage', 'Upto 6 pages'];
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  return (
+    <div className="hero-cards-container">
+      {/* Testimonial Card */}
+      <div className="card testimonial-card"
+           style={{
+             background: colors[3],
+             color: colors[0],
+             boxShadow: `0 4px 32px 0 ${colors[4]}44`,
+             border: `2px solid ${colors[2]}`
+           }}>
+        <div className="card-header">
+          <div className="avatar">
+            <div className="avatar-fallback" 
+                 style={{ 
+                   background: colors[2], 
+                   color: colors[1] 
+                 }}>
+              EG
+            </div>
+          </div>
+          <div className="card-title-section">
+            <h3 className="card-title" 
+                style={{
+                  color: colors[2],
+                  fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+                  fontSize: `${sizes.subtitle}px`
+                }}>
+              Enrique Gonzalez
+            </h3>
+            <p className="card-description" 
+               style={{
+                 color: colors[0],
+                 fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                 fontSize: `${sizes.paragraph}px`
+               }}>
+              @kikegonza
+            </p>
+          </div>
+        </div>
+        <div className="card-content" 
+             style={{
+               color: colors[0],
+               fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+               fontSize: `${sizes.paragraph}px`
+             }}>
+          Funciona perfecto!
+        </div>
+      </div>
+
+      {/* Team Card */}
+      <div className="card team-card"
+           style={{
+             background: colors[1],
+             color: colors[0],
+             boxShadow: `0 4px 32px 0 ${colors[4]}44`,
+             border: `2px solid ${colors[2]}`
+           }}>
+        <div className="card-header">
+          <h3 className="card-title" 
+              style={{
+                color: colors[2],
+                fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+                fontSize: `${sizes.subtitle}px`
+              }}>
+            samuel molina
+          </h3>
+          <p className="card-description" style={{ color: colors[0] }}></p>
+        </div>
+        <div className="card-content" 
+             style={{
+               color: colors[0],
+               fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+               fontSize: `${sizes.paragraph}px`
+             }}>
+          <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+            eiusmod tempor incididunt ut labore et dolore magna aliqua.
+          </p>
+        </div>
+        <div className="card-footer">
+          <div className="social-links">
+            <a href="https://github.com/leoMirandaa" target="_blank" rel="noopener noreferrer"
+               className="social-link" style={{ color: colors[2] }}>
+              <svg className="social-icon" width="20" height="20" viewBox="0 0 15 15" fill="none">
+                <path d="M7.5 0.875C5.49797 0.875 3.875 2.49797 3.875 4.5C3.875 6.15288 4.98124 7.54738 6.49373 7.98351C5.2997 8.12901 4.27557 8.55134 3.50407 9.31167C2.52216 10.2794 2.02502 11.72 2.02502 13.5999C2.02502 13.7823 2.04227 13.9625 2.07507 14.1395C2.08574 14.1941 2.13444 14.2382 2.19054 14.2489C2.24664 14.2596 2.30274 14.2109 2.31341 14.1563C2.34342 13.9951 2.36067 13.8286 2.36067 13.6599C2.36067 11.8796 2.98288 10.7206 3.66852 9.95229C4.3134 9.22635 5.21838 8.875 6.49995 8.875C7.78152 8.875 8.6865 9.22635 9.33138 9.95229C10.017 10.7206 10.6392 11.8796 10.6392 13.6599C10.6392 13.8286 10.6565 13.9951 10.6865 14.1563C10.6972 14.2109 10.7533 14.2596 10.8094 14.2489C10.8655 14.2382 10.9142 14.1941 10.9248 14.1395C10.9576 13.9625 10.9749 13.7823 10.9749 13.5999C10.9749 11.72 10.4777 10.2794 9.4958 9.31167C8.7243 8.55135 7.70025 8.12903 6.50625 7.98352C8.01875 7.5474 9.125 6.15289 9.125 4.5C9.125 2.49797 7.50203 0.875 7.5 0.875ZM6.49995 1.875C7.03888 1.875 7.4749 2.31102 7.4749 2.85C7.4749 3.38898 7.03888 3.825 6.49995 3.825C5.96102 3.825 5.525 3.38898 5.525 2.85C5.525 2.31102 5.96102 1.875 6.49995 1.875ZM2.09935 5.02179C2.0583 4.97955 1.99638 4.97089 1.94566 5.00021C1.89494 5.02953 1.86519 5.09225 1.87868 5.15108C2.19733 6.44357 3.25406 7.41206 4.58775 7.69076C4.63033 7.7007 4.67367 7.67147 4.68315 7.62899C4.69263 7.58651 4.6634 7.54317 4.62092 7.53369C3.42012 7.28239 2.46957 6.45919 2.18946 5.27089C2.17931 5.22691 2.14113 5.19681 2.09935 5.02179ZM12.9006 5.02179C12.8588 5.19681 12.8206 5.22691 12.8105 5.27089C12.5304 6.45919 11.5798 7.28239 10.379 7.53369C10.3366 7.54317 10.3073 7.58651 10.3168 7.62899C10.3263 7.67147 10.3696 7.7007 10.4122 7.69076C11.7459 7.41206 12.8026 6.44357 13.1213 5.15108C13.1348 5.09225 13.105 5.02953 13.0543 5.00021C13.0036 4.97089 12.9417 4.97955 12.9006 5.02179ZM9.00035 9.88929C8.81124 9.91496 8.63923 10.0104 8.52147 10.1596C8.40371 10.3088 8.34805 10.5 8.36626 10.6896C8.38447 10.8792 8.47492 11.0509 8.61653 11.1749C8.75814 11.2989 8.94009 11.3678 9.1264 11.3678C9.31272 11.3678 9.49467 11.2989 9.63628 11.1749C9.77789 11.0509 9.86834 10.8792 9.88655 10.6896C9.90476 10.5 9.8491 10.3088 9.73134 10.1596C9.61358 10.0104 9.44157 9.91496 9.25245 9.88929C9.20925 9.8833 9.04345 9.8833 9.00035 9.88929Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+              </svg>
+            </a>
+            <a href="https://twitter.com/leo_mirand4" target="_blank" rel="noopener noreferrer"
+               className="social-link" style={{ color: colors[2] }}>
+              <svg className="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+              </svg>
+            </a>
+            <a href="https://www.linkedin.com/in/leopoldo-miranda/" target="_blank" rel="noopener noreferrer"
+               className="social-link" style={{ color: colors[2] }}>
+              <svg className="social-icon" width="20" height="20" viewBox="0 0 24 24" fill="none">
+                <path d="M16 8C17.5913 8 19.1174 8.63214 20.2426 9.75736C21.3679 10.8826 22 12.4087 22 14V21H18V14C18 13.4696 17.7893 12.9609 17.4142 12.5858C17.0391 12.2107 16.5304 12 16 12C15.4696 12 14.9609 12.2107 14.5858 12.5858C14.2107 12.9609 14 13.4696 14 14V21H10V14C10 12.4087 10.6321 10.8826 11.7574 9.75736C12.8826 8.63214 14.4087 8 16 8V8Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M6 9H2V21H6V9Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M4 6C5.10457 6 6 5.10457 6 4C6 2.89543 5.10457 2 4 2C2.89543 2 2 2.89543 2 4C2 5.10457 2.89543 6 4 6Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing Card */}
+      <div className="card pricing-card"
+           style={{
+             background: colors[3],
+             color: colors[0],
+             boxShadow: `0 4px 32px 0 ${colors[4]}44`,
+             border: `2px solid ${colors[2]}`
+           }}>
+        <div className="card-header">
+          <div className="pricing-title">
+            <h3 className="card-title" 
+                style={{
+                  color: colors[2],
+                  fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+                  fontSize: `${sizes.subtitle}px`
+                }}>
+              Gratis
+            </h3>
+            <span className="badge"
+                  style={{
+                    background: colors[2],
+                    color: colors[1],
+                    border: `1px solid ${colors[4]}`,
+                    fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                    fontSize: `${sizes.paragraph}px`
+                  }}>
+              el mas popular
+            </span>
+          </div>
+          <div className="pricing-amount">
+            <span className="price" 
+                  style={{
+                    color: colors[0],
+                    fontFamily: fonts[0] ? 'CustomFont1, sans-serif' : 'inherit',
+                    fontSize: `${sizes.title}px`
+                  }}>
+              $0
+            </span>
+            <span className="period" 
+                  style={{
+                    color: colors[2],
+                    fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                    fontSize: `${sizes.paragraph}px`
+                  }}>
+              /month
+            </span>
+          </div>
+          <p className="card-description" 
+             style={{
+               color: colors[0],
+               fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+               fontSize: `${sizes.paragraph}px`
+             }}>
+            Lorem ipsum dolor sit, amet ipsum consectetur adipisicing elit.
+          </p>
+        </div>
+        <div className="card-content">
+          <button className="btn btn-primary"
+                  style={{
+                    background: colors[2],
+                    color: colors[1],
+                    borderColor: colors[0],
+                    fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                    fontSize: `${sizes.paragraph}px`
+                  }}>
+            empezar prueba ahora
+          </button>
+        </div>
+        <hr className="divider" style={{ borderColor: colors[4] }} />
+        <div className="card-footer">
+          <div className="benefits">
+            {benefits.map((benefit, index) => (
+              <div className="benefit-item" key={index}>
+                <svg className="check-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" style={{ color: colors[2] }}>
+                  <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <span style={{
+                  color: colors[0],
+                  fontFamily: fonts[1] ? 'CustomFont2, sans-serif' : 'inherit',
+                  fontSize: `${sizes.paragraph}px`
+                }}>
+                  {benefit}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default HeroCards;
